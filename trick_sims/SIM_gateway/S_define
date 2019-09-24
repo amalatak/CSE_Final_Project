@@ -1,0 +1,35 @@
+/************************TRICK HEADER*************************
+PURPOSE:
+    (This S_define works with the RUN_analytic input file)
+LIBRARY DEPENDENCIES:
+    (
+      (orbiter/src/orbiter_init.cpp)
+      (orbiter/src/orbiter_numeric.cpp)
+      (orbiter/src/orbiter_shutdown.cpp)
+    )
+*************************************************************/
+
+#include "sim_objects/default_trick_sys.sm"
+##include "orbiter/include/orbiter_numeric.hh"
+
+class OrbiterSimObject : public Trick::SimObject {
+
+    public:
+        ORBITER orbiter;
+
+        OrbiterSimObject() {
+            ("default_data") orbiter_default_data( &orbiter ) ;
+            ("initialization") orbiter_init( &orbiter ) ;
+            ("derivative") orbiter_deriv( &orbiter) ;
+            ("integration") trick_ret= orbiter_integ( & orbiter);
+            ("shutdown") orbiter_shutdown( &orbiter ) ;
+        }
+} ;
+
+OrbiterSimObject dyn ;
+
+IntegLoop dyn_integloop (0.01) dyn ;
+void create_connections() {
+    dyn_integloop.getIntegrator(Runge_Kutta_4, 4);
+}
+

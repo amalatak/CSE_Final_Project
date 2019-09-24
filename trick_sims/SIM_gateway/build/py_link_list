@@ -1,0 +1,5 @@
+build/init_swig_modules.o
+build/top.o
+build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/S_source_py.o
+build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/models/orbiter/include/orbiter_py.o
+build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/models/orbiter/include/orbiter_numeric_py.o

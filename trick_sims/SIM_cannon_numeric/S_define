@@ -1,0 +1,34 @@
+/************************TRICK HEADER*************************
+PURPOSE:
+    (This S_define works with the RUN_analytic input file)
+LIBRARY DEPENDENCIES:
+    (
+      (cannon/src/cannon_init.c)
+      (cannon/src/cannon_numeric.c)
+      (cannon/src/cannon_shutdown.c)
+    )
+*************************************************************/
+
+#include "sim_objects/default_trick_sys.sm"
+##include "cannon/include/cannon_numeric.h"
+
+class CannonSimObject : public Trick::SimObject {
+
+    public:
+        CANNON cannon;
+
+        CannonSimObject() {
+            ("default_data") cannon_default_data( &cannon ) ;
+            ("initialization") cannon_init( &cannon ) ;
+            ("derivative") cannon_deriv( &cannon) ;
+            ("integration") trick_ret= cannon_integ( & cannon);
+            ("shutdown") cannon_shutdown( &cannon ) ;
+        }
+} ;
+
+CannonSimObject dyn ;
+
+IntegLoop dyn_integloop (0.01) dyn ;
+void create_connections() {
+    dyn_integloop.getIntegrator(Runge_Kutta_4, 4);
+}

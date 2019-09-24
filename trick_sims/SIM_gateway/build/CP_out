@@ -1,0 +1,34 @@
+Output for /home/amalatak/repo/trick/libexec/trick/configuration_processor version 19.1.dev- at Tue Sep 24 16:35:54 2019
+
+Parsing    S_define
+Processing S_define
+Processing /usr/include/stdc-predef.h
+Continuing S_define
+Processing /home/amalatak/repo/trick/share/trick/sim_objects/default_trick_sys.sm
+Processing SysSimObject
+Processing MonteCarloSimObject
+Processing MemoryManagerSimObject
+Processing CheckPointRestartSimObject
+Processing SieSimObject
+Processing CommandLineArgumentsSimObject
+Processing MessageSimObject
+Processing JITSimObject
+Processing InputProcessorSimObject
+Processing ThreadProcessEventSimObject
+Processing EventManagerSimObject
+Processing VariableServerSimObject
+Processing DataRecordDispatcherSimObject
+Processing RTSyncSimObject
+Processing FrameLogSimObject
+Processing MasterSlaveSimObject
+Processing InstrumentationSimObject
+Processing DMTCPSimObject
+Processing InjectorExecSimObject
+Processing InjectorSimObject
+Processing ZeroconfSimObject
+Processing UnitTestSimObject
+Processing UdUnitsSimObject
+Continuing S_define
+Processing OrbiterSimObject
+Finished   S_define
+Writing    S_source.c
