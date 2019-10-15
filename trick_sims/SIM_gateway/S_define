@@ -6,16 +6,18 @@ LIBRARY DEPENDENCIES:
       (orbiter/src/orbiter_init.cpp)
       (orbiter/src/orbiter_numeric.cpp)
       (orbiter/src/orbiter_shutdown.cpp)
+      (orbiter/src/ATTITUDE.cpp)
     )
 *************************************************************/
 
 #include "sim_objects/default_trick_sys.sm"
 ##include "orbiter/include/orbiter_numeric.hh"
+##include "orbiter/include/ATTITUDE.hh"
 
 class OrbiterSimObject : public Trick::SimObject {
 
     public:
-        ORBITER orbiter;
+        ORBITER orbiter; 
 
         OrbiterSimObject() {
             ("default_data") orbiter_default_data( &orbiter ) ;
@@ -28,8 +30,8 @@ class OrbiterSimObject : public Trick::SimObject {
 
 OrbiterSimObject dyn ;
 
-IntegLoop dyn_integloop (0.01) dyn ;
+IntegLoop dyn_integloop (.01) dyn ;
 void create_connections() {
-    dyn_integloop.getIntegrator(Runge_Kutta_4, 4);
+    dyn_integloop.getIntegrator(Runge_Kutta_4, 6);
 }
 
