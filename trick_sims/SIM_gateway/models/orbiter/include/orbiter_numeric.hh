@@ -11,8 +11,10 @@ PURPOSE: ( Orbiter Numeric Model )
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 int orbiter_integ(ORBITER*) ;
 int orbiter_deriv(ORBITER*) ;
+
 #ifdef __cplusplus
 }
 #endif

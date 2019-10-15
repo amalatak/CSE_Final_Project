@@ -3,6 +3,7 @@ PURPOSE: (Print the final orbiter state.)
 *************************************************************************/
 #include <stdio.h>
 #include "../include/orbiter.hh"
+#include "../include/ATTITUDE.hh"
 #include "trick/exec_proto.h"
 
 int orbiter_shutdown( ORBITER* C) {
