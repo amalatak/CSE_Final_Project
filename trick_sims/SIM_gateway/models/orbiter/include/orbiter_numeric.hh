@@ -2,8 +2,8 @@
 PURPOSE: ( Orbiter Numeric Model )
 **************************************************************************/
 
-#ifndef ORBITER_NUMERIC_H
-#define ORBITER_NUMERIC_H
+#ifndef ORBIT_SYSTEM_NUMERIC_H
+#define ORBIT_SYSTEM_NUMERIC_H
 
 #include "orbiter.hh"
 #include <stdio.h>
@@ -12,8 +12,8 @@ PURPOSE: ( Orbiter Numeric Model )
 extern "C" {
 #endif
 
-int orbiter_integ(ORBITER*) ;
-int orbiter_deriv(ORBITER*) ;
+int orbit_system_integ(ORBIT_SYSTEM*) ;
+int orbit_system_deriv(ORBIT_SYSTEM*) ;
 
 #ifdef __cplusplus
 }

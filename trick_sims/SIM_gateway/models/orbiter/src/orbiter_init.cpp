@@ -14,54 +14,110 @@ PURPOSE: (Set the initial data values)
 using namespace std;
 
 /* default data job */
-int orbiter_default_data( ORBITER* C ) {
+int orbit_system_default_data( ORBIT_SYSTEM* C ) {
 
     C->mu = 4.9048695e12;
-
-    C->pos0[0] = 1900.0e3 ; // orbiter radius
-    C->pos0[1] = 1000.0 ;
-    C->pos0[2] = 1000.0 ;
-
     C->time = 0.0 ;
+    C->r_mag = 1900.0e3 ; // system radii
+    C->off_angle = .0001;
 
-    C->SumOfMoments[0] = 0.0;
-    C->SumOfMoments[1] = 0.0;
-    C->SumOfMoments[2] = 0.1;
+    C->target_pos0[0] = C->r_mag ; 
+    C->target_pos0[1] = 0.0 ;
+    C->target_pos0[2] = 0.0 ;
 
-    C->attitude.set_Jmat(100.0, 0.0, 0.0,
-                         0.0, 100.0, 0.0,
-                         0.0, 0.0, 100.0);
-    C->attitude.set_Jmat_inv();
+    C->chaser_pos0[0] = C->r_mag*cos(C->off_angle) ; // chaser lives just behind target
+    C->chaser_pos0[1] =-C->r_mag*sin(C->off_angle) ;
+    C->chaser_pos0[2] = 0.0 ;
 
-    C->attitude.set_body_i(1.0, 0.0, 0.0,
-                           0.0, 1.0, 0.0,
-                           0.0, 0.0, 1.0);
+    C->chaser.set_Jmat(100.0, 0.0, 0.0,
+                       0.0, 200.0, 0.0,
+                       0.0, 0.0, 100.0);
+
+    C->target.set_Jmat(1000.0, 0.0, 0.0,
+                       0.0, 2000.0, 0.0,
+                       0.0, 0.0, 1000.0);
+
+    C->chaser.set_Jmat_inv();
+    C->target.set_Jmat_inv();
 
     return 0 ;
 }
 
 /* initialization job */
-int orbiter_init( ORBITER* C ) {
+int orbit_system_init( ORBIT_SYSTEM* C ) {
+
+        /* TARGET INITIAL VALUES */
    
-    C->pos[0] = C->pos0[0] ; 
-    C->pos[1] = C->pos0[1] ;
-    C->pos[2] = C->pos0[2] ;
+    C->target_pos[0] = C->target_pos0[0] ; 
+    C->target_pos[1] = C->target_pos0[1] ;
+    C->target_pos[2] = C->target_pos0[2] ;
 
-    C->vel0[0] = 1;
-    C->vel0[1] = sqrt(C->mu/(C->pos[0]));
-    C->vel0[2] = 1;
+    C->target_vel0[0] = 0.0;
+    C->target_vel0[1] = sqrt(C->mu/(C->r_mag));
+    C->target_vel0[2] = 0.0;
 
-    C->vel[0] = C->vel0[0] ; 
-    C->vel[1] = C->vel0[1] ; 
-    C->vel[2] = C->vel0[2] ; 
+    C->target_vel[0] = C->target_vel0[0] ; 
+    C->target_vel[1] = C->target_vel0[1] ; 
+    C->target_vel[2] = C->target_vel0[2] ; 
 
-    C->acc[0] = -C->mu*C->pos[0]/sqrt(C->pos[0]*C->pos[0] + C->pos[1]*C->pos[1] + C->pos[2]*C->pos[2]);
-    C->acc[1] = -C->mu*C->pos[1]/sqrt(C->pos[0]*C->pos[0] + C->pos[1]*C->pos[1] + C->pos[2]*C->pos[2]);
-    C->acc[2] = -C->mu*C->pos[2]/sqrt(C->pos[0]*C->pos[0] + C->pos[1]*C->pos[1] + C->pos[2]*C->pos[2]);
+    C->target_acc[0] = -C->mu*C->target_pos[0]/sqrt(C->target_pos[0]*C->target_pos[0] + 
+                                                    C->target_pos[1]*C->target_pos[1] + 
+                                                    C->target_pos[2]*C->target_pos[2]);
 
-    C->attitude.set_rv(C->pos, C->vel);
-    C->attitude.calculate_LVLH_i();
-    C->attitude.set_torques(C->SumOfMoments);
+    C->target_acc[1] = -C->mu*C->target_pos[1]/sqrt(C->target_pos[0]*C->target_pos[0] + 
+                                                    C->target_pos[1]*C->target_pos[1] + 
+                                                    C->target_pos[2]*C->target_pos[2]);
+
+    C->target_acc[2] = -C->mu*C->target_pos[2]/sqrt(C->target_pos[0]*C->target_pos[0] + 
+                                                    C->target_pos[1]*C->target_pos[1] + 
+                                                    C->target_pos[2]*C->target_pos[2]);
+
+    C->target.set_rv(C->target_pos, C->target_vel);
+    C->target.calculate_body_LVLH();
+    C->target.set_body_i(1.0, 0.0, 0.0,
+                         0.0, 1.0, 0.0,
+                         0.0, 0.0, 1.0);
+    C->target.set_gains(0.01, 0.0, 0.1);
+    C->target.target_initialize(); 
+
+    C->target.set_qdes_center_pointing();
+    C->target.set_wdes_center_pointing();
+
+    /* CHASER INITIAL VALUES */
+   
+    C->chaser_pos[0] = C->chaser_pos0[0] ; 
+    C->chaser_pos[1] = C->chaser_pos0[1] ;
+    C->chaser_pos[2] = C->chaser_pos0[2] ;
+
+    C->chaser_vel0[0] = sqrt(C->mu/(C->r_mag))*sin(C->off_angle);
+    C->chaser_vel0[1] = sqrt(C->mu/(C->r_mag))*cos(C->off_angle);
+    C->chaser_vel0[2] = 0.0;
+
+
+    C->chaser_vel[0] = C->chaser_vel0[0] ; 
+    C->chaser_vel[1] = C->chaser_vel0[1] ; 
+    C->chaser_vel[2] = C->chaser_vel0[2] ; 
+
+    C->chaser_acc[0] = -C->mu*C->chaser_pos[0]/sqrt(C->chaser_pos[0]*C->chaser_pos[0] + 
+                                                    C->chaser_pos[1]*C->chaser_pos[1] + 
+                                                    C->chaser_pos[2]*C->chaser_pos[2]);
+
+    C->chaser_acc[1] = -C->mu*C->chaser_pos[1]/sqrt(C->chaser_pos[0]*C->chaser_pos[0] + 
+                                                    C->chaser_pos[1]*C->chaser_pos[1] + 
+                                                    C->chaser_pos[2]*C->chaser_pos[2]);
+
+    C->chaser_acc[2] = -C->mu*C->chaser_pos[2]/sqrt(C->chaser_pos[0]*C->chaser_pos[0] + 
+                                                    C->chaser_pos[1]*C->chaser_pos[1] + 
+                                                    C->chaser_pos[2]*C->chaser_pos[2]);
+
+    C->chaser.set_rv(C->chaser_pos, C->chaser_vel);
+    C->chaser.set_pos_rel(C->target_pos);
+    C->chaser.calculate_chaser_frame();
+    C->chaser.set_body_i(1.0, 0.0, 0.0,
+                         0.0, 1.0, 0.0,
+                         0.0, 0.0, 1.0);
+    C->chaser.set_gains(0.01, 0.0, 0.1);
+    C->chaser.chaser_initialize(); 
 
     return 0 ; 
 }

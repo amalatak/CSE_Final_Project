@@ -10,53 +10,127 @@
 
 using namespace std; 
 
-int orbiter_deriv(ORBITER* C) {
-    
-    double norm = sqrt(C->pos[0]*C->pos[0] + C->pos[1]*C->pos[1] + C->pos[2]*C->pos[2]);
+/********************************************************************
+ORBIT PROPAGATION VALIDATED WITH MATLAB 
+********************************************************************/
 
-    C->acc[0] = -C->mu*C->pos[0]/(norm*norm*norm);
-    C->acc[1] = -C->mu*C->pos[1]/(norm*norm*norm);
-    C->acc[2] = -C->mu*C->pos[2]/(norm*norm*norm);
+int orbit_system_deriv(ORBIT_SYSTEM* C) {
+    
+    double chaser_norm = sqrt(C->chaser_pos[0]*C->chaser_pos[0] + 
+                              C->chaser_pos[1]*C->chaser_pos[1] + 
+                              C->chaser_pos[2]*C->chaser_pos[2]);
+
+    C->chaser_acc[0] = -C->mu*C->chaser_pos[0]/(chaser_norm*chaser_norm*chaser_norm);
+    C->chaser_acc[1] = -C->mu*C->chaser_pos[1]/(chaser_norm*chaser_norm*chaser_norm);
+    C->chaser_acc[2] = -C->mu*C->chaser_pos[2]/(chaser_norm*chaser_norm*chaser_norm);
+
+
+    double target_norm = sqrt(C->target_pos[0]*C->target_pos[0] + 
+                              C->target_pos[1]*C->target_pos[1] + 
+                              C->target_pos[2]*C->target_pos[2]);
+
+    C->target_acc[0] = -C->mu*C->target_pos[0]/(target_norm*target_norm*target_norm);
+    C->target_acc[1] = -C->mu*C->target_pos[1]/(target_norm*target_norm*target_norm);
+    C->target_acc[2] = -C->mu*C->target_pos[2]/(target_norm*target_norm*target_norm);
 
     return(0);
 }
 
-int orbiter_integ(ORBITER* C) {
+int orbit_system_integ(ORBIT_SYSTEM* C) {
     int ipass;
 
     load_state(
-        &C->pos[0] ,
-        &C->pos[1] ,
-        &C->pos[2] ,
-        &C->vel[0] ,
-        &C->vel[1] ,
-        &C->vel[2] ,
+        &C->chaser_pos[0] ,
+        &C->chaser_pos[1] ,
+        &C->chaser_pos[2] ,
+        &C->chaser_vel[0] ,
+        &C->chaser_vel[1] ,
+        &C->chaser_vel[2] ,
+        &C->chaser.w_body_b[0] ,
+        &C->chaser.w_body_b[1] ,
+        &C->chaser.w_body_b[2] ,
+        &C->chaser.qest[0] ,
+        &C->chaser.qest[1] ,
+        &C->chaser.qest[2] ,
+        &C->chaser.qest[3] ,
+        &C->target_pos[0] ,
+        &C->target_pos[1] ,
+        &C->target_pos[2] ,
+        &C->target_vel[0] ,
+        &C->target_vel[1] ,
+        &C->target_vel[2] ,
+        &C->target.w_body_b[0] ,
+        &C->target.w_body_b[1] ,
+        &C->target.w_body_b[2] ,
+        &C->target.qest[0] ,
+        &C->target.qest[1] ,
+        &C->target.qest[2] ,
+        &C->target.qest[3] ,
         NULL);
 
     load_deriv(
-        &C->vel[0] ,
-        &C->vel[1] ,
-        &C->vel[2] ,
-        &C->acc[0] ,
-        &C->acc[1] ,
-        &C->acc[2] ,
+        &C->chaser_vel[0] ,
+        &C->chaser_vel[1] ,
+        &C->chaser_vel[2] ,
+        &C->chaser_acc[0] ,
+        &C->chaser_acc[1] ,
+        &C->chaser_acc[2] ,
+        &C->chaser.wdot_b_b[0] ,
+        &C->chaser.wdot_b_b[1] ,
+        &C->chaser.wdot_b_b[2] ,
+        &C->chaser.q_dot[0] ,
+        &C->chaser.q_dot[1] ,
+        &C->chaser.q_dot[2] ,
+        &C->chaser.q_dot[3] ,
+        &C->target_vel[0] ,
+        &C->target_vel[1] ,
+        &C->target_vel[2] ,
+        &C->target_acc[0] ,
+        &C->target_acc[1] ,
+        &C->target_acc[2] ,
+        &C->target.wdot_b_b[0] ,
+        &C->target.wdot_b_b[1] ,
+        &C->target.wdot_b_b[2] ,
+        &C->target.q_dot[0] ,
+        &C->target.q_dot[1] ,
+        &C->target.q_dot[2] ,
+        &C->target.q_dot[3] ,
         NULL);
 
     ipass = integrate();
-    
-    C->attitude.set_rv(C->pos, C->vel);
-    C->attitude.calculate_LVLH_i();
-    C->attitude.calculate_wdot_body_bwrti();
-    C->attitude.calculate_body_LVLH();
+
+
+    C->target.target_dynamics_update(C->target_pos, C->target_vel);
+    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos);
 
 
     unload_state(
-        &C->pos[0] ,
-        &C->pos[1] ,
-        &C->pos[2] ,
-        &C->vel[0] ,
-        &C->vel[1] ,
-        &C->vel[2] ,
+        &C->chaser_pos[0] ,
+        &C->chaser_pos[1] ,
+        &C->chaser_pos[2] ,
+        &C->chaser_vel[0] ,
+        &C->chaser_vel[1] ,
+        &C->chaser_vel[2] ,
+        &C->chaser.w_body_b[0] ,
+        &C->chaser.w_body_b[1] ,
+        &C->chaser.w_body_b[2] ,
+        &C->chaser.qest[0] ,
+        &C->chaser.qest[1] ,
+        &C->chaser.qest[2] ,
+        &C->chaser.qest[3] ,
+        &C->target_pos[0] ,
+        &C->target_pos[1] ,
+        &C->target_pos[2] ,
+        &C->target_vel[0] ,
+        &C->target_vel[1] ,
+        &C->target_vel[2] ,
+        &C->target.w_body_b[0] ,
+        &C->target.w_body_b[1] ,
+        &C->target.w_body_b[2] ,
+        &C->target.qest[0] ,
+        &C->target.qest[1] ,
+        &C->target.qest[2] ,
+        &C->target.qest[3] ,
         NULL );
 
     return(ipass);

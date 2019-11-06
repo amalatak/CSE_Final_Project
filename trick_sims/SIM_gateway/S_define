@@ -14,24 +14,24 @@ LIBRARY DEPENDENCIES:
 ##include "orbiter/include/orbiter_numeric.hh"
 ##include "orbiter/include/ATTITUDE.hh"
 
-class OrbiterSimObject : public Trick::SimObject {
+class OrbitSystemSimObject : public Trick::SimObject {
 
     public:
-        ORBITER orbiter; 
+        ORBIT_SYSTEM orbit_system; 
 
-        OrbiterSimObject() {
-            ("default_data") orbiter_default_data( &orbiter ) ;
-            ("initialization") orbiter_init( &orbiter ) ;
-            ("derivative") orbiter_deriv( &orbiter) ;
-            ("integration") trick_ret= orbiter_integ( & orbiter);
-            ("shutdown") orbiter_shutdown( &orbiter ) ;
+        OrbitSystemSimObject() {
+            ("default_data") orbit_system_default_data( &orbit_system ) ;
+            ("initialization") orbit_system_init( &orbit_system ) ;
+            ("derivative") orbit_system_deriv( &orbit_system) ;
+            ("integration") trick_ret= orbit_system_integ( & orbit_system);
+            ("shutdown") orbit_system_shutdown( &orbit_system ) ;
         }
 } ;
 
-OrbiterSimObject dyn ;
+OrbitSystemSimObject dyn ;
 
-IntegLoop dyn_integloop (.01) dyn ;
+IntegLoop dyn_integloop (1) dyn ;
 void create_connections() {
-    dyn_integloop.getIntegrator(Runge_Kutta_4, 6);
+    dyn_integloop.getIntegrator(Runge_Kutta_4, 26);
 }
 
