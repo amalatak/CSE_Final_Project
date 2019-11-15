@@ -6,6 +6,12 @@ LIBRARY DEPENDENCIES:
       (orbiter/src/orbiter_init.cpp)
       (orbiter/src/orbiter_numeric.cpp)
       (orbiter/src/orbiter_shutdown.cpp)
+      (orbiter/src/UTILITIES.cpp)
+      (orbiter/src/estimation.cpp)
+      (orbiter/src/sensors.cpp)
+      (orbiter/src/control.cpp)
+      (orbiter/src/quaternion.cpp)
+      (orbiter/src/DCM.cpp)
       (orbiter/src/ATTITUDE.cpp)
     )
 *************************************************************/

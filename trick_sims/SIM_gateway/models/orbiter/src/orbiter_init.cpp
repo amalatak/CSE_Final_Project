@@ -73,15 +73,12 @@ int orbit_system_init( ORBIT_SYSTEM* C ) {
                                                     C->target_pos[2]*C->target_pos[2]);
 
     C->target.set_rv(C->target_pos, C->target_vel);
-    C->target.calculate_body_LVLH();
     C->target.set_body_i(1.0, 0.0, 0.0,
                          0.0, 1.0, 0.0,
                          0.0, 0.0, 1.0);
-    C->target.set_gains(0.01, 0.0, 0.1);
+    C->target.controller.set_gains(0.01, 0.0, 0.1);
     C->target.target_initialize(); 
 
-    C->target.set_qdes_center_pointing();
-    C->target.set_wdes_center_pointing();
 
     /* CHASER INITIAL VALUES */
    
@@ -112,11 +109,10 @@ int orbit_system_init( ORBIT_SYSTEM* C ) {
 
     C->chaser.set_rv(C->chaser_pos, C->chaser_vel);
     C->chaser.set_pos_rel(C->target_pos);
-    C->chaser.calculate_chaser_frame();
     C->chaser.set_body_i(1.0, 0.0, 0.0,
                          0.0, 1.0, 0.0,
                          0.0, 0.0, 1.0);
-    C->chaser.set_gains(0.01, 0.0, 0.1);
+    C->chaser.controller.set_gains(0.01, 0.0, 0.1);
     C->chaser.chaser_initialize(); 
 
     return 0 ; 
