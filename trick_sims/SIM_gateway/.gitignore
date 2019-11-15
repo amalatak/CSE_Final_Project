@@ -6,3 +6,4 @@ makefile
 slprj/
 build/
 trick/
+RUN_test/
