@@ -1,4 +1,0 @@
-build/Makefile_swig: \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/S_source.hh \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/models/cannon/include/cannon.h \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/models/cannon/include/cannon_numeric.h

@@ -1,4 +1,0 @@
-build/Makefile_swig: \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/S_source.hh \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/models/orbiter/include/orbiter.hh \
-    /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/models/orbiter/include/orbiter_numeric.hh

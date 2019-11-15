@@ -1,5 +1,0 @@
-build/init_swig_modules.o
-build/top.o
-build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/S_source_py.o
-build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/models/cannon/include/cannon_py.o
-build/home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_cannon_numeric/models/cannon/include/cannon_numeric_py.o
