@@ -1,2 +1,2 @@
 # execfile("Modified_data/orbiter.dr")
-trick.stop(300.0)
+trick.stop(30.0)
