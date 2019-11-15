@@ -2,4 +2,4 @@ slprj/
 *.slxc
 build/
 trick/
-
+RUN_test/
