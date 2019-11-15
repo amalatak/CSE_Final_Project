@@ -1,5 +1,7 @@
 slprj/
 *.slxc
+*.exe
 build/
 trick/
 RUN_test/
+S_main_Linux_5.4_x86_64.exe
