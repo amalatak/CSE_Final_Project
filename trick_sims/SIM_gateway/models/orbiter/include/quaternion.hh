@@ -32,7 +32,7 @@ public:
     void q_conjugate(double q[], double qconj[]);
     void calculate_qdot(double w_body[3], double quat[4], double qrate[4]);
     void calculate_quaternion_error(double quat[4], double qdes[4], double qerr[4]);
-    void calculate_euler_error(double quat[4], double qdes[4], double eul_er[3]);
+    void calculate_euler_error(double qerr[4], double eul_er[3]);
     void calculate_euler_error_rate(double w_body[3], double w_body_ref[3], double eul_er[3], double eul_er_rate[3]);
 
 };

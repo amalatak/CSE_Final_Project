@@ -182,7 +182,7 @@ void quaternion::calculate_quaternion_error(double quat[4], double qdes[4], doub
     qmult(quat, qstar, qerr);
 }
 
-void quaternion::calculate_euler_error(double quat[4], double qdes[4], double eul_er[3]) {
+void quaternion::calculate_euler_error(double qerr[4], double eul_er[3]) {
     /*
         We parameterize the Roll-Pitch-Yaw error angles according to 
         the following equation (using small angle approximation). 
@@ -190,8 +190,6 @@ void quaternion::calculate_euler_error(double quat[4], double qdes[4], double eu
         dE = 2*dq_v/dq_s
 
     */
-    double qerr[4];
-    calculate_quaternion_error(quat, qdes, qerr);
 
     eul_er[0] = 2*qerr[0]/qerr[3];
     eul_er[1] = 2*qerr[1]/qerr[3];

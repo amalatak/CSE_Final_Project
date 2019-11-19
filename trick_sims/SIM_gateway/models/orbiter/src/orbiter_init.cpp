@@ -108,7 +108,7 @@ int orbit_system_init( ORBIT_SYSTEM* C ) {
                                                     C->chaser_pos[2]*C->chaser_pos[2]);
 
     C->chaser.set_rv(C->chaser_pos, C->chaser_vel);
-    C->chaser.set_pos_rel(C->target_pos);
+    C->chaser.set_pos_vel_rel(C->target_pos, C->target_vel);
     C->chaser.set_body_i(1.0, 0.0, 0.0,
                          0.0, 1.0, 0.0,
                          0.0, 0.0, 1.0);

@@ -52,13 +52,26 @@ void control::set_qdes_target_pointing(double chaser_frame[3][3], double qdes[4]
     quat_util.DCM2quat(chaser_frame, qdes);
 }
 
-void control::set_wdes_target_pointing(double position[3], double velocity[3], double quat_body[4], double wdes_b[3]) {
+void control::set_wdes_target_pointing(double pos_rel[3], double vel_rel[3], double quat_body[4], double wdes_b[3]) {
     /* 
-        This function sets the desired angular velocity ...
-        for now, set it to match target
-    */
-    set_wdes_center_pointing(position, velocity, quat_body, wdes_b);
+        This function sets the desired angular velocity as 
 
+        rel_pos x rel_vel / |rel_pos|^2
+
+        then transforms it into the body frame
+    */
+    double rsq, rxv_rel[3], Ti2b[3][3];
+
+    rsq = pos_rel[0]*pos_rel[0] + pos_rel[1]*pos_rel[1] + pos_rel[2]*pos_rel[2];
+    utility.cross(pos_rel, vel_rel, rxv_rel);
+
+    w_ref_i[0] = rxv_rel[0]/rsq;
+    w_ref_i[1] = rxv_rel[1]/rsq;
+    w_ref_i[2] = rxv_rel[2]/rsq;
+
+    quat_util.quat2DCM(quat_body, Ti2b);  // should this be state or estimate
+
+    utility.matvecmul(Ti2b, w_ref_i, wdes_b);
 }
 
 void control::PD(double eul_err[3], double eul_err_rate[3], double desired_out[3]) {

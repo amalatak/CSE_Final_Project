@@ -74,3 +74,18 @@ void DCM::calculate_body_LVLH(double LVLH_i[3][3], double body_i[3][3], double b
 
 }
 
+void DCM::T1(double angle, double T_1[3][3]) {
+    /*
+        T1 transformation around the x-axis
+    */
+}
+void DCM::T2(double angle, double T_2[3][3]) {
+    /*
+        T1 transformation around the x-axis
+    */
+}
+void DCM::T3(double angle, double T_3[3][3]) {
+    /*
+        T1 transformation around the x-axis
+    */
+}

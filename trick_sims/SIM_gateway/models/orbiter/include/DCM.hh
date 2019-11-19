@@ -29,6 +29,10 @@ public:
     void calculate_LVLH_i(double position[3], double velocity[3], double LVLH_i[3][3]);
     void calculate_body_LVLH(double LVLH_i[3][3], double body_i[3][3], double body_lvlh[3][3]);
 
+    void T1(double angle, double T_1[3][3]);
+    void T2(double angle, double T_2[3][3]);
+    void T3(double angle, double T_3[3][3]);
+
 };
 
 #ifdef __cplusplus

@@ -39,7 +39,7 @@ public:
     void set_qdes_center_pointing(double LVLH_i[3][3], double qdes[4]);
     void set_wdes_center_pointing(double position[3], double velocity[3], double quat_body[4], double wdes_b[3]);
     void set_qdes_target_pointing(double chaser_frame[3][3], double qdes[4]);
-    void set_wdes_target_pointing(double position[3], double velocity[3], double quat_body[4], double wdes_b[3]); /* This will change at some point */
+    void set_wdes_target_pointing(double pos_rel[3], double vel_rel[3], double quat_body[4], double wdes_b[3]);
     void PD(double eul_err[3], double eul_err_rate[3], double desired_out[3]);
 
 };

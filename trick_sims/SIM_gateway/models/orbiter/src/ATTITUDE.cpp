@@ -95,7 +95,7 @@ void ATTITUDE::set_rv(double pos[], double vel[]) {
     velocity[0] = vel[0]; velocity[1] = vel[1]; velocity[2] = vel[2];
 }
 
-void ATTITUDE::set_pos_rel(double pos2[]) {
+void ATTITUDE::set_pos_vel_rel(double pos2[], double vel2[]) {
     /*
         This function finds the relative position of the 
         chaser to the target. It sets the relative vector
@@ -104,6 +104,10 @@ void ATTITUDE::set_pos_rel(double pos2[]) {
     pos_rel[0] = pos2[0] - position[0];
     pos_rel[1] = pos2[1] - position[1];
     pos_rel[2] = pos2[2] - position[2];
+
+    vel_rel[0] = vel2[0] - velocity[0];
+    vel_rel[1] = vel2[1] - velocity[1];
+    vel_rel[2] = vel2[2] - velocity[2];
 }
 
 
@@ -136,16 +140,19 @@ TOP LEVEL SCRIPTS
 
 void ATTITUDE::estimate_attitude() {
     /* ATTITUDE DETERMINATION */
-    double x_hat[3];
-    sensor.horizon_sensor(body_i, position, x_hat);
+    double y_hat[3], body_chaser_estimate[3][3], body_chaser_estimate_t[3][3], dq_est[4];
+
+    sensor.horizon_sensor(body_i, position, y_hat);
     sensor.camera(pos_rel, body_i, camera_sensor);
-    
+    estimator.TRIAD(camera_sensor, y_hat, body_chaser_estimate_t);
+    utility.transpose(body_chaser_estimate_t, body_chaser_estimate);
+    quat_util.DCM2quat(body_chaser_estimate, dq_est);
+    quat_util.calculate_euler_error(dq_est, eul_er_est);
+    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 }
 
 void ATTITUDE::attitude_control() {
     /* ATTITUDE CONTROL */
-    quat_util.calculate_euler_error(q_state, q_des, eul_er_est);
-    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 
     double uout[3];
     controller.PD(eul_er_est, eul_er_rate_est, uout);
@@ -174,7 +181,8 @@ void ATTITUDE::target_initialize() {
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_horizon_sensor_error(0.1);
+    sensor.set_star_tracker_error(0.00001);
+
     dcm.calculate_LVLH_i(position, velocity, LVLH_i);
     quat_util.set_q(LVLH_i, 0.0, offset_eul, q_state);
     quat_util.set_q(LVLH_i, 0.0, offset_eul, q_est);
@@ -204,7 +212,8 @@ void ATTITUDE::chaser_initialize() {
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_horizon_sensor_error(0.1);
+    sensor.set_horizon_sensor_error(0.001);
+    sensor.set_camera_error(0.0001);
 
     dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
     quat_util.set_q(chaser_i, 0.0, offset_eul, q_state);
@@ -218,19 +227,27 @@ void ATTITUDE::target_dynamics_update(double pos[], double vel[]) {
         assuming it is set to reference the LVLH frame and moves
         independent of the chaser. 
     */
-
+    double body_i_meas[3][3];
     set_rv(pos, vel);
     dcm.calculate_LVLH_i(position, velocity, LVLH_i);
     calculate_wdot_body_bwrti();
     quat_util.calculate_qdot(w_body_b, q_state, q_dot); 
-    dcm.calculate_body_LVLH(LVLH_i, body_i, body_lvlh);
 
     controller.set_qdes_center_pointing(LVLH_i, q_des);
     controller.set_wdes_center_pointing(position, velocity, q_state, w_ref_b);
+
+    quat_util.quat2DCM(q_state, body_i);
+    sensor.star_tracker(body_i, body_i_meas);
+    quat_util.DCM2quat(body_i_meas, q_est);
+
+    quat_util.calculate_quaternion_error(q_est, q_des, q_err);
+    quat_util.calculate_euler_error(q_err, eul_er_est);
+    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
+
     attitude_control();
 }
 
-void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[]) {
+void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[]) {
     /*
         This script is to update the dynamics of the chaser
         assuming it is set to reference the defined chaser frame and moves
@@ -238,14 +255,14 @@ void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_
     */
 
     set_rv(pos, vel);
-    set_pos_rel(target_pos);
+    set_pos_vel_rel(target_pos, target_vel);
     dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
     calculate_wdot_body_bwrti();
     quat_util.calculate_qdot(w_body_b, q_state, q_dot);
     quat_util.quat2DCM(q_state, body_i);
     dcm.calculate_body_chaser(chaser_i, body_i, body_chaser);
     controller.set_qdes_target_pointing(chaser_i, q_des);
-    controller.set_wdes_target_pointing(position, velocity, q_state, w_ref_b);
+    controller.set_wdes_target_pointing(pos_rel, vel_rel, q_state, w_ref_b);
     
     estimate_attitude();
     attitude_control();

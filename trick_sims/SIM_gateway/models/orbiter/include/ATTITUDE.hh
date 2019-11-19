@@ -32,7 +32,8 @@ private:
     double position[3];               // m position of spacecraft
     double velocity[3];               // m/s velocity of spacecraft 
     double rv[6];                     // -- position-velocity vector
-    double pos_rel[3];                 // -- relative position vector (for chaser use)
+    double pos_rel[3];                // -- relative position vector (for chaser use)
+    double vel_rel[3];                // -- relative velocity vector (for chaser use)
 
     // DCM
     double body_i[3][3];              // -- body attitude relative to inertial frame
@@ -90,7 +91,7 @@ public:
 
     /* KINEMATICS */
     void set_rv(double pos[], double vel[]);
-    void set_pos_rel(double pos[]);
+    void set_pos_vel_rel(double pos[], double vel[]);
     void calculate_wdot_body_bwrti();
 
     /* TOP LEVEL SCRIPTS */
@@ -99,7 +100,7 @@ public:
     void target_initialize();
     void target_dynamics_update(double pos[], double vel[]);
     void chaser_initialize();
-    void chaser_dynamics_update(double pos[], double vel[], double target_pos[]);
+    void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[]);
 };
 
 #ifdef __cplusplus
