@@ -74,18 +74,42 @@ void DCM::calculate_body_LVLH(double LVLH_i[3][3], double body_i[3][3], double b
 
 }
 
-void DCM::T1(double angle, double T_1[3][3]) {
+void DCM::T1(double angle, double T1_mat[3][3]) {
     /*
         T1 transformation around the x-axis
+
+        T1 = [1      0      0
+              0  cos(a) sin(a)
+              0 -sin(a) cos(a)]
     */
+
+    T1_mat[0][0] = 1.0; T1_mat[0][1] = 0.0;        T1_mat[0][2] = 0.0; 
+    T1_mat[1][0] = 0.0; T1_mat[1][1] = cos(angle); T1_mat[1][2] = sin(angle); 
+    T1_mat[2][0] = 0.0; T1_mat[2][1] =-sin(angle); T1_mat[2][2] = cos(angle);
 }
-void DCM::T2(double angle, double T_2[3][3]) {
+
+void DCM::T2(double angle, double T2_mat[3][3]) {
     /*
-        T1 transformation around the x-axis
+        T2 transformation around the y-axis
+
+        T2 = [cos(a) 0 -sin(a)
+              0      1      0
+              sin(a) 0  cos(a)]
     */
+    T2_mat[0][0] = cos(angle); T2_mat[0][1] = 0.0; T2_mat[0][2] = -sin(angle); 
+    T2_mat[1][0] = 0.0;        T2_mat[1][1] = 1.0; T2_mat[1][2] = 0.0; 
+    T2_mat[2][0] = sin(angle); T2_mat[2][1] = 0.0; T2_mat[2][2] = cos(angle);
 }
-void DCM::T3(double angle, double T_3[3][3]) {
+
+void DCM::T3(double angle, double T3_mat[3][3]) {
     /*
-        T1 transformation around the x-axis
+        T3 transformation around the z-axis
+
+        T3 = [cos(a) sin(a) 0
+             -sin(a) cos(a) 0
+              0      0      1 ]        
     */
+    T3_mat[0][0] = cos(angle); T3_mat[0][1] = sin(angle); T3_mat[0][2] = 0.0; 
+    T3_mat[1][0] =-sin(angle); T3_mat[1][1] = cos(angle); T3_mat[1][2] = 0.0; 
+    T3_mat[2][0] = 0.0;        T3_mat[2][1] = 0.0;        T3_mat[2][2] = 1.0; 
 }

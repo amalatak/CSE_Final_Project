@@ -138,26 +138,6 @@ void ATTITUDE::calculate_wdot_body_bwrti() {
 TOP LEVEL SCRIPTS
 ********************************************************************/
 
-void ATTITUDE::estimate_attitude() {
-    /* ATTITUDE DETERMINATION */
-    double y_hat[3], body_chaser_estimate[3][3], body_chaser_estimate_t[3][3], dq_est[4];
-
-    sensor.horizon_sensor(body_i, position, y_hat);
-    sensor.camera(pos_rel, body_i, camera_sensor);
-    estimator.TRIAD(camera_sensor, y_hat, body_chaser_estimate_t);
-    utility.transpose(body_chaser_estimate_t, body_chaser_estimate);
-    quat_util.DCM2quat(body_chaser_estimate, dq_est);
-    quat_util.calculate_euler_error(dq_est, eul_er_est);
-    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
-}
-
-void ATTITUDE::attitude_control() {
-    /* ATTITUDE CONTROL */
-
-    double uout[3];
-    controller.PD(eul_er_est, eul_er_rate_est, uout);
-    utility.matvecmul(Jmat, uout, torques);
-}
 
 void ATTITUDE::target_initialize() {
     /* 
@@ -181,7 +161,7 @@ void ATTITUDE::target_initialize() {
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_star_tracker_error(0.00001);
+    sensor.set_star_tracker_error(0.00000);
 
     dcm.calculate_LVLH_i(position, velocity, LVLH_i);
     quat_util.set_q(LVLH_i, 0.0, offset_eul, q_state);
@@ -212,8 +192,8 @@ void ATTITUDE::chaser_initialize() {
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_horizon_sensor_error(0.001);
-    sensor.set_camera_error(0.0001);
+    sensor.set_horizon_sensor_error(0.00);
+    sensor.set_camera_error(0.000);
 
     dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
     quat_util.set_q(chaser_i, 0.0, offset_eul, q_state);
@@ -244,7 +224,20 @@ void ATTITUDE::target_dynamics_update(double pos[], double vel[]) {
     quat_util.calculate_euler_error(q_err, eul_er_est);
     quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 
-    attitude_control();
+    controller.attitude_control(eul_er_est, eul_er_rate_est, Jmat, torques);
+}
+
+void ATTITUDE::estimate_attitude() {
+    /* ATTITUDE DETERMINATION */
+    double y_hat[3], body_chaser_estimate[3][3], body_chaser_estimate_t[3][3], dq_est[4];
+
+    sensor.horizon_sensor(body_i, position, y_hat);
+    sensor.camera(pos_rel, body_i, camera_sensor);
+    estimator.TRIAD(camera_sensor, y_hat, body_chaser_estimate_t);
+    utility.transpose(body_chaser_estimate_t, body_chaser_estimate);
+    quat_util.DCM2quat(body_chaser_estimate, dq_est);
+    quat_util.calculate_euler_error(dq_est, eul_er_est);
+    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 }
 
 void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[]) {
@@ -265,5 +258,12 @@ void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_
     controller.set_wdes_target_pointing(pos_rel, vel_rel, q_state, w_ref_b);
     
     estimate_attitude();
-    attitude_control();
+    
+    quat_util.quat2DCM(q_state, body_i);
+    quat_util.DCM2quat(body_i, q_est);
+    quat_util.calculate_quaternion_error(q_est, q_des, q_err);
+    quat_util.calculate_euler_error(q_err, eul_er_est);
+    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
+
+    controller.attitude_control(eul_er_est, eul_er_rate_est, Jmat, torques);
 }

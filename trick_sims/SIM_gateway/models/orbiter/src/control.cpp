@@ -72,6 +72,7 @@ void control::set_wdes_target_pointing(double pos_rel[3], double vel_rel[3], dou
     quat_util.quat2DCM(quat_body, Ti2b);  // should this be state or estimate
 
     utility.matvecmul(Ti2b, w_ref_i, wdes_b);
+    
 }
 
 void control::PD(double eul_err[3], double eul_err_rate[3], double desired_out[3]) {
@@ -83,3 +84,11 @@ void control::PD(double eul_err[3], double eul_err_rate[3], double desired_out[3
     desired_out[2] = -Kp*eul_err[2] - Kd*eul_err_rate[2];
 }
 
+void control::attitude_control(double eul_err[3], double eul_err_rate[3], double Jmat[3][3], double Tout[3]) {
+    /*
+        This is a top level attitude control script
+    */
+    double uout[3];
+    PD(eul_err, eul_err_rate, uout);
+    utility.matvecmul(Jmat, uout, Tout);
+}

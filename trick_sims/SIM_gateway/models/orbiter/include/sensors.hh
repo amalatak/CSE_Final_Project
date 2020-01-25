@@ -7,6 +7,7 @@ PURPOSE: ( Sensor Model )
 #include "estimation.hh"
 #include "sensors.hh"
 #include "UTILITIES.hh"
+#include "DCM.hh"
 #include <iostream>
 #include <vector>
 #include <math.h>
@@ -22,6 +23,7 @@ extern "C" {
 class sensors {
 private:
     UTILITIES utility;
+    DCM dcm;
     double horizon_sensor_error;       /* rad horizon sensor error */
     double camera_error;
     double star_tracker_error;
