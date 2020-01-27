@@ -88,17 +88,17 @@ This library assumes that the scalar element of the quaternion is q[3]
 and that the quaternion is defined as [e_vec*sin(theta/2); cos(theta/2)]
 ********************************************************************/
 
-void quaternion::set_q(double DCM[3][3], double angle_offset, double e_axis[3], double quat[4]) {
+void quaternion::set_q(double DCM[3][3], double angle_offset_rad, double e_axis[3], double quat[4]) {
     /*
         This function initializes the quaternion by taking an initial DCM
         then rotating it by some offset and then converting to 
         a quaternion
     */
     double q_set[4], q_offset[4];
-    q_offset[0] = sin(angle_offset/2)*e_axis[0];
-    q_offset[1] = sin(angle_offset/2)*e_axis[1];
-    q_offset[2] = sin(angle_offset/2)*e_axis[2];
-    q_offset[3] = cos(angle_offset/2);
+    q_offset[0] = sin(angle_offset_rad/2)*e_axis[0];
+    q_offset[1] = sin(angle_offset_rad/2)*e_axis[1];
+    q_offset[2] = sin(angle_offset_rad/2)*e_axis[2];
+    q_offset[3] = cos(angle_offset_rad/2);
 
     DCM2quat(DCM, q_set);
     qmult(q_set, q_offset, quat);

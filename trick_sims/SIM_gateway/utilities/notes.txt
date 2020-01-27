@@ -1,0 +1,42 @@
+*** NOTES
+
+""" Collect Data """
+
+make trick data collection file with trick-dre
+make Modified_data directory
+trick-dre
+name DR in DR Name 
+Change DR cycle to .01
+double click on the sim object and then the variable you want to save
+add execfile("Modified_data/model.dr") to input.py 
+
+""" Plot Data """
+
+trick-dp
+click on run dir
+click on RUN_test
+click blue lightning bolt 
+
+double click sim variables
+click white sheet
+save plot info with save-as -> DP_Product/DP_model_variable
+
+""" Running Real Time """
+Add 
+trick.frame_log_on()
+trick.real_time_enable()
+trick.exec_set_software_frame(0.1)
+trick.itimer_enable()
+trick.exec_set_enable_freeze(True)
+trick.exec_set_freeze_command(True)
+trick.sim_control_panel_set_enabled(True)
+to a file,
+then add
+execfile("path_to_file") to input.py file
+
+""" Viewing realtime data """
+start sim with realtime running
+run tv with little blue tv icon
+click on object and then variable to watch
+can freeze sim with actions -> freeze at 
+in tv: actions -> strip chart to 

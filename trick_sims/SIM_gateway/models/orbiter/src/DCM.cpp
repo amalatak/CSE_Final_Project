@@ -15,8 +15,9 @@ void DCM::calculate_chaser_frame(double pos_rel[3], double velocity[3], double c
         This function calculates the "chaser frame" from relative position,
         chaser position and velocity and has axes aligned such that:
         x points to the target
-        y completes the right handed system
-        z is perpendicular to the orbit plane along the LVLH z
+        y completes the right handed system, pointing away from the frame center
+        z is perpendicular to the orbit plane along the LVLH z, perpendicular to
+            the orbit plane
 
     */
 

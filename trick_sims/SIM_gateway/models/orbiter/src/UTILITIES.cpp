@@ -13,6 +13,25 @@ double UTILITIES::dot(double u[], double v[]) {
     return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
 }
 
+void UTILITIES::addition(double u[3], double v[3], double u_plus_v[3]) {
+    /* Adds two vectors */
+    u_plus_v[0] = u[0] + v[0];
+    u_plus_v[1] = u[1] + v[1];
+    u_plus_v[2] = u[2] + v[2];
+}
+void UTILITIES::subtract(double u[3], double v[3], double u_minus_v[3]) {
+    /* Subtracts two vectors */
+    u_minus_v[0] = u[0] - v[0];
+    u_minus_v[1] = u[1] - v[1];
+    u_minus_v[2] = u[2] - v[2];
+}
+
+void UTILITIES::identity(double eye[3][3]) {
+    eye[0][0] = 1; eye[0][1] = 0; eye[0][2] = 0; 
+    eye[1][0] = 0; eye[1][1] = 1; eye[1][2] = 0; 
+    eye[2][0] = 0; eye[2][1] = 0; eye[2][2] = 1; 
+}
+
 void UTILITIES::cross(double u[], double v[], double cross_p[]) {
     // calculate u x v
     cross_p[0] = u[1]*v[2] - v[1]*u[2];
@@ -48,10 +67,20 @@ void UTILITIES::print_vec(double vec[3]) {
     vec[2] << "] " <<endl; 
 }
 
+void UTILITIES::print_scalar(double scalar) {
+    cout << "Some scalar: " << scalar << endl;
+}
+
 void UTILITIES::set_vec(double vec1, double vec2, double vec3, double vec[3]) {
     vec[0] = vec1;
     vec[1] = vec2;
     vec[2] = vec3;
+}
+
+void UTILITIES::set_mat(double mat[3][3], double set_mat[3][3]) {
+    set_mat[0][0] = mat[0][0]; set_mat[0][1] = mat[0][1]; set_mat[0][2] = mat[0][2];
+    set_mat[1][0] = mat[1][0]; set_mat[1][1] = mat[1][1]; set_mat[1][2] = mat[1][2];
+    set_mat[2][0] = mat[2][0]; set_mat[2][1] = mat[2][1]; set_mat[2][2] = mat[2][2];
 }
 
 void UTILITIES::transpose(double mat[3][3], double mat_transpose[3][3]) {

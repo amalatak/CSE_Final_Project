@@ -27,7 +27,7 @@ public:
     void DCM2quat(double DCM[3][3], double quat[4]); 
 
     /* QUATERNION OPERATIONS */
-    void set_q(double DCM[3][3], double angle_offset, double e_axis[3], double quat[4]);
+    void set_q(double DCM[3][3], double angle_offset_rad, double e_axis[3], double quat[4]);
     void qmult(double q1[], double q2[], double q3[]);
     void q_conjugate(double q[], double qconj[]);
     void calculate_qdot(double w_body[3], double quat[4], double qrate[4]);

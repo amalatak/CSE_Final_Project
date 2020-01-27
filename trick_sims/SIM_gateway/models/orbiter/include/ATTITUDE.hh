@@ -40,7 +40,6 @@ private:
     double body_lvlh[3][3];           // -- body attitude relative to lvlh frame
     double LVLH_i[3][3];              // -- lvlh frame relative to intertial frame
     double body_to_LVLH[3][3];        // -- body to lvlh transformation (or rotation) matrix
-    double chaser_i[3][3];            // -- chaser attitude frame relative to inertial frame
     double body_chaser[3][3];         // -- body attitude relative to the chaser frame
 
     // QUATERNIONS
@@ -65,6 +64,7 @@ private:
     double Kd;                        /* -- Derivative Gain */
 
     double camera_sensor[3];
+    double docking_port_location[3];
 
     estimation estimator;
     quaternion quat_util;
@@ -77,10 +77,14 @@ public:
     double wdot_b_b[3];               /* rad/s^2 angular acceleration of body relative to inertial frame coordinatized in the body frame */
     double q_state[4];                /* -- Quaternion attitude of the satellite body with respect to the inertial frame */
     double q_dot[4];                  /* -- Quaternion attitude rate of the satellite body with respect to the inertial frame */
+    double chaser_i[3][3];            // -- chaser attitude frame relative to inertial frame
+    double target_i[3][3];            // -- target attitude frame relative to the inertial frame, used for chaser calculations
     control controller;
 
     /* PRINT UTILITY */
     void print_qerr();
+
+    /* Set utilities */
     void set_Jmat(double J_00, double J_01, double J_02, 
                   double J_10, double J_11, double J_12, 
                   double J_20, double J_21, double J_22);
@@ -96,11 +100,11 @@ public:
 
     /* TOP LEVEL SCRIPTS */
     void estimate_attitude();
-    void attitude_control();
+    // void attitude_control();
     void target_initialize();
     void target_dynamics_update(double pos[], double vel[]);
     void chaser_initialize();
-    void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[]);
+    void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], double target_attitude[3][3]);
 };
 
 #ifdef __cplusplus

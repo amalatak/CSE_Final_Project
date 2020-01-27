@@ -17,9 +17,7 @@ using namespace Eigen;
 
 /*
 TO DO:
- * Add Camera sensor on chaser
- * Get analytic wdes of chaser frame
- * Get dwdes to be ddtwdes
+    Sensor geometry
 */
 
 void ATTITUDE::print_qerr() {
@@ -153,19 +151,20 @@ void ATTITUDE::target_initialize() {
          * wdot_body
          * External Torques
     */
-    double offset_eul[3];
-    offset_eul[0] = 1.0;
-    offset_eul[1] = 1.0;
-    offset_eul[2] = 1.0;
+    double offset_eul_mag[3], offset_eul_axis[3];
+    offset_eul_mag[0] = 1.0;
+    offset_eul_mag[1] = 1.0;
+    offset_eul_mag[2] = 1.0;
+    utility.norm(offset_eul_mag, offset_eul_axis);
 
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_star_tracker_error(0.00000);
+    sensor.set_star_tracker_error(0.00001);
 
     dcm.calculate_LVLH_i(position, velocity, LVLH_i);
-    quat_util.set_q(LVLH_i, 0.0, offset_eul, q_state);
-    quat_util.set_q(LVLH_i, 0.0, offset_eul, q_est);
+    quat_util.set_q(LVLH_i, 0.0, offset_eul_axis, q_state);
+    quat_util.set_q(LVLH_i, 0.0, offset_eul_axis, q_est);
 
 }
 
@@ -184,20 +183,26 @@ void ATTITUDE::chaser_initialize() {
          * External Torques
     */
 
-    double offset_eul[3];
-    offset_eul[0] = 1.0;
-    offset_eul[1] = 1.0;
-    offset_eul[2] = 1.0;
-
+    
+    double offset_eul_mag[3], offset_eul_axis[3];
+    utility.set_vec(1.0, 1.0, 1.0, offset_eul_mag);
+    utility.norm(offset_eul_mag, offset_eul_axis);
     utility.set_vec(0.0, 0.0, 0.0, wdot_b_b);
     utility.set_vec(0.0, 0.0, 0.0, w_body_b);
     utility.set_vec(0.0, 0.0, 0.0, torques);
-    sensor.set_horizon_sensor_error(0.00);
-    sensor.set_camera_error(0.000);
+
+    /* sensors */
+    sensor.set_horizon_sensor_location(1.0, -3.0, -1.0);
+    sensor.set_horizon_sensor_error(0.0);  // deg
+
+    sensor.set_camera_location(5.0, 1.0, 1.0);
+    sensor.set_camera_error(0.0000);       // rad
+
+    utility.set_vec(-2.0, -20, 3, docking_port_location); // in the Target body frame
 
     dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
-    quat_util.set_q(chaser_i, 0.0, offset_eul, q_state);
-    quat_util.set_q(chaser_i, 0.0, offset_eul, q_est);
+    quat_util.set_q(chaser_i, 0.01, offset_eul_axis, q_state);
+    quat_util.set_q(chaser_i, 0.01, offset_eul_axis, q_est);
 
 }
 
@@ -216,8 +221,8 @@ void ATTITUDE::target_dynamics_update(double pos[], double vel[]) {
     controller.set_qdes_center_pointing(LVLH_i, q_des);
     controller.set_wdes_center_pointing(position, velocity, q_state, w_ref_b);
 
-    quat_util.quat2DCM(q_state, body_i);
-    sensor.star_tracker(body_i, body_i_meas);
+    quat_util.quat2DCM(q_state, target_i);
+    sensor.star_tracker(target_i, body_i_meas);
     quat_util.DCM2quat(body_i_meas, q_est);
 
     quat_util.calculate_quaternion_error(q_est, q_des, q_err);
@@ -240,15 +245,18 @@ void ATTITUDE::estimate_attitude() {
     quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 }
 
-void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[]) {
+void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], double target_attitude[3][3]) {
     /*
         This script is to update the dynamics of the chaser
         assuming it is set to reference the defined chaser frame and moves
         relative to the target. 
     */
+    double port_i[3];
+    sensor.set_target_location(target_attitude, docking_port_location, target_pos, port_i);
 
     set_rv(pos, vel);
     set_pos_vel_rel(target_pos, target_vel);
+    
     dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
     calculate_wdot_body_bwrti();
     quat_util.calculate_qdot(w_body_b, q_state, q_dot);
@@ -258,12 +266,6 @@ void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_
     controller.set_wdes_target_pointing(pos_rel, vel_rel, q_state, w_ref_b);
     
     estimate_attitude();
-    
-    quat_util.quat2DCM(q_state, body_i);
-    quat_util.DCM2quat(body_i, q_est);
-    quat_util.calculate_quaternion_error(q_est, q_des, q_err);
-    quat_util.calculate_euler_error(q_err, eul_er_est);
-    quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 
     controller.attitude_control(eul_er_est, eul_er_rate_est, Jmat, torques);
 }
