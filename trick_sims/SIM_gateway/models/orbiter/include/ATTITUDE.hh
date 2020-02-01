@@ -31,40 +31,31 @@ private:
     // Translational Variables
     double position[3];               // m position of spacecraft
     double velocity[3];               // m/s velocity of spacecraft 
-    double rv[6];                     // -- position-velocity vector
-    double pos_rel[3];                // -- relative position vector (for chaser use)
-    double vel_rel[3];                // -- relative velocity vector (for chaser use)
 
     // DCM
     double body_i[3][3];              // -- body attitude relative to inertial frame
-    double body_lvlh[3][3];           // -- body attitude relative to lvlh frame
     double LVLH_i[3][3];              // -- lvlh frame relative to intertial frame
-    double body_to_LVLH[3][3];        // -- body to lvlh transformation (or rotation) matrix
-    double body_chaser[3][3];         // -- body attitude relative to the chaser frame
 
     // QUATERNIONS
     double q_est[4];                  /* -- Estimated quaternion attitude of the satellite body with respect to the inertial frame */
-    double q_des[4];                   /* -- Desired quaternion attitude of the satellite body with respect to the inertial frame */
+    double q_des[4];                  /* -- Desired quaternion attitude of the satellite body with respect to the inertial frame */
     double q_err[4];                  /* -- Quaternion error relative to the desired quaternion */
     double eul_er_est[3];             /* -- Small angle approximation for euler angle error */
     double eul_er_rate_est[3];
     
     // KINEMATICS
+    double target_w_b[3];
     double torques[3];                // -- Summation of torques acting on body
-    double w_body_i[3];               /* rad/s angular velocity of the body frame in the inertial frame coordinatized in the inertial frame */
-    double wdot_b_i[3];               /* rad/s^2 angular acceleration of body relative to inertial frame coordinatized in the inertial frame */
 
     // CONTROL VALUES
-    double w_ref_i[3];
     double w_ref_b[3];
-    double att_ref[3][3]; 
-    double control_out[3];            /* -- Controller output */
-    double Kp;                        /* -- Proportional Gain */
-    double Ki;                        /* -- Integral Gain */
-    double Kd;                        /* -- Derivative Gain */
-
-    double camera_sensor[3];
-    double docking_port_location[3];
+    
+    // GEOMETRY and SENSORS
+    double camera_location[3];        //
+    double docking_port_location[3];  //
+    double r_camera_to_dock[3];       //
+    double r_camera_to_dock_rate[3];  //
+    double camera_sensor[3];          //
 
     estimation estimator;
     quaternion quat_util;
@@ -95,8 +86,16 @@ public:
 
     /* KINEMATICS */
     void set_rv(double pos[], double vel[]);
-    void set_pos_vel_rel(double pos[], double vel[]);
+    void set_target_w_b(double w_target_body_b[3]);
     void calculate_wdot_body_bwrti();
+
+    /* GEOMETRY */
+    void calculate_r_camera_to_dock(double target_attitude[3][3], double target_cg[3], 
+                                    double chaser_attitude[3][3], double chaser_cg[3], 
+                                    double r_camera_2_dock_i[3]);
+    void calculate_r_camera_to_dock_rate(double target_vel[3], double target_attitude[3][3], double target_w_b[3], 
+                                         double chaser_vel[3], double chaser_attitude[3][3], double chaser_w_b[3],
+                                         double r_camera_to_dock_rate_i[3]);
 
     /* TOP LEVEL SCRIPTS */
     void estimate_attitude();
@@ -104,7 +103,9 @@ public:
     void target_initialize();
     void target_dynamics_update(double pos[], double vel[]);
     void chaser_initialize();
-    void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], double target_attitude[3][3]);
+    void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], 
+                                double target_attitude[3][3], double w_target_b[3]);
+    void top_sol();
 };
 
 #ifdef __cplusplus

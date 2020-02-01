@@ -101,32 +101,6 @@ void sensors::set_camera_location(double camera_x_b, double camera_y_b, double c
     camera_location[2] = camera_z_b;
 }
 
-void sensors::set_target_location(double target_attitude[3][3], double target_port[3], double target_cg[3], double port_i[3]) {
-    /*
-        Set the position of the target location of the target satellite i.e. the docking port. 
-        We know the location relative to the target cg in its body frame and the position of the target,
-        so
-
-        r_port_i = r_cg_i + Tb2i*r_port_b
-
-        Inputs : Target attitude - this lets us know where the port is relative to the target cg
-                 Target port     - the docking port relative to the target body frame
-                 Target cg       - the position of the target in the inertial frame
-
-        Output : Port location   - the location of the port in the inertial frame.
-
-    */
-
-    double target_b2i[3][3], r_dock_i_rel_to_cg[3];
-
-    utility.transpose(target_attitude, target_b2i);                       // Calculate Tb2i
-    utility.matvecmul(target_b2i, target_port, r_dock_i_rel_to_cg);   // Calculate Tb2i*r_port_b
-    
-    port_i[0] = target_cg[0] + r_dock_i_rel_to_cg[0];
-    port_i[1] = target_cg[1] + r_dock_i_rel_to_cg[1];
-    port_i[2] = target_cg[2] + r_dock_i_rel_to_cg[2];
-
-}
 
 /***************************************************************************
 
@@ -154,6 +128,7 @@ void sensors::horizon_sensor(double Ti2b[3][3], double position[3], double meas_
     utility.matmul(noise_mat, Ti2b, noisy_Ti2b);
     utility.matvecmul(noisy_Ti2b, pos_dir, meas_dir);
 
+
 }
 
 void sensors::camera(double rel_pos[3], double Ti2b[3][3], double target_dir_meas[3]) {
@@ -174,12 +149,11 @@ void sensors::camera(double rel_pos[3], double Ti2b[3][3], double target_dir_mea
     double noise_y = generate_noise_scalar(camera_error);
     double noise_z = generate_noise_scalar(camera_error);
 
-    double rel_pos_b[3], rel_pos_cam_b[3], u_c2t_b[3], zb[3], yb[3];
+    double rel_pos_b[3], u_c2t_b[3], zb[3], yb[3];
     double zmeas, ymeas, meas_vec[3];
 
     utility.matvecmul(Ti2b, rel_pos, rel_pos_b);
-    utility.subtract(rel_pos_b, camera_location, rel_pos_cam_b);
-    utility.norm(rel_pos_cam_b, u_c2t_b);
+    utility.norm(rel_pos_b, u_c2t_b);
 
     yb[0] = 0.0; yb[1] = 1.0; yb[2] = 0.0;
     zb[0] = 0.0; zb[1] = 0.0; zb[2] = 1.0; 

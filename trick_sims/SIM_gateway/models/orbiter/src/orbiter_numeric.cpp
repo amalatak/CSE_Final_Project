@@ -101,7 +101,7 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
 
 
     C->target.target_dynamics_update(C->target_pos, C->target_vel);
-    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.target_i);
+    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.target_i, C->target.w_body_b);
     
 
 

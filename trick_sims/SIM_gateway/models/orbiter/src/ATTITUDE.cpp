@@ -15,10 +15,6 @@ using std::endl;
 
 using namespace Eigen;
 
-/*
-TO DO:
-    Sensor geometry
-*/
 
 void ATTITUDE::print_qerr() {
     printf( "qer = [%.9f, %.9f, %.9f]\n", eul_er_est[0], eul_er_est[1], eul_er_est[2]);
@@ -86,26 +82,15 @@ void ATTITUDE::set_body_i(double body_0_0, double body_0_1, double body_0_2,
 KINEMATICS
 ********************************************************************/
 void ATTITUDE::set_rv(double pos[], double vel[]) {
-    rv[0] = pos[0]; rv[1] = pos[1]; rv[2] = pos[2]; 
-    rv[3] = vel[0]; rv[4] = vel[1]; rv[5] = vel[2];
 
     position[0] = pos[0]; position[1] = pos[1]; position[2] = pos[2];
     velocity[0] = vel[0]; velocity[1] = vel[1]; velocity[2] = vel[2];
 }
 
-void ATTITUDE::set_pos_vel_rel(double pos2[], double vel2[]) {
-    /*
-        This function finds the relative position of the 
-        chaser to the target. It sets the relative vector
-        to be rel_r = pos_target - pos_chaser
-    */
-    pos_rel[0] = pos2[0] - position[0];
-    pos_rel[1] = pos2[1] - position[1];
-    pos_rel[2] = pos2[2] - position[2];
-
-    vel_rel[0] = vel2[0] - velocity[0];
-    vel_rel[1] = vel2[1] - velocity[1];
-    vel_rel[2] = vel2[2] - velocity[2];
+void ATTITUDE::set_target_w_b(double w_target_body_b[3]) {
+    target_w_b[0] = w_target_body_b[0];
+    target_w_b[1] = w_target_body_b[1];
+    target_w_b[2] = w_target_body_b[2];
 }
 
 
@@ -130,6 +115,80 @@ void ATTITUDE::calculate_wdot_body_bwrti() {
 
     utility.matvecmul(Jmat_inv, t_sub_wcross, wdot_b_b);
 
+}
+
+/********************************************************************
+GEOMETRY
+********************************************************************/
+
+
+void ATTITUDE::calculate_r_camera_to_dock(double target_attitude[3][3], double target_cg[3], 
+                                          double chaser_attitude[3][3], double chaser_cg[3],
+                                          double r_camera_2_dock_i[3]) {
+    /*
+        Given:
+            r_chaser - inertial frame
+            r_target - inertial frame
+            r_camera - chaser body frame
+            r_docking_port - target body frame
+        Output:
+            r_camera_to_target_dock - inertial frame
+
+        1 - Use target attitude and port position in target frame to find port in inertial frame
+        2 - Use chaser attitude and camera position in chaser frame to find camera in inertial frame
+        3 - Add these vectors to the r_cg2cg vector
+    */
+    double target_b2i[3][3], chaser_b2i[3][3], 
+           r_dock_i_rel_to_cg[3], r_cam_i_rel_to_cg[3], 
+           port_i[3], cam_i[3];
+
+    // get docking port location in inertial frame
+    utility.transpose(target_attitude, target_b2i);                                 // Calculate Tb2i
+    utility.matvecmul(target_b2i, docking_port_location, r_dock_i_rel_to_cg);       // Calculate Tb2i*r_port_b
+    utility.addition(target_cg, r_dock_i_rel_to_cg, port_i);
+
+
+    // get camera location in inertial frame
+    utility.transpose(chaser_attitude, chaser_b2i);
+    utility.matvecmul(chaser_b2i, camera_location, r_cam_i_rel_to_cg);
+    utility.addition(chaser_cg, r_dock_i_rel_to_cg, cam_i);
+
+    // find r_cam_to_dock
+    utility.subtract(port_i, cam_i, r_camera_2_dock_i);
+}
+
+void ATTITUDE::calculate_r_camera_to_dock_rate(double target_vel[3], double target_attitude[3][3], double target_w[3], 
+                                               double chaser_vel[3], double chaser_attitude[3][3], double chaser_w_b[3],
+                                               double r_camera_to_dock_rate_i[3]) {
+    /* 
+    
+        Calculate velocity of docking port in the inertial frame
+
+        vd = vcg + wxrd
+
+        Calculate velocity of the camera in the inertial frame
+        relative velocity is vd - vc
+    */
+
+    double wxr_target_b[3], wxr_target_i[3], target_attiutde_transpose[3][3], v_docking_port[3],
+           wxr_chaser_b[3], wxr_chaser_i[3], chaser_attitude_transpose[3][3], v_camera[3];
+
+    // Find camera velocity in inertial frame
+    utility.cross(chaser_w_b, camera_location, wxr_chaser_b);
+    utility.transpose(chaser_attitude, chaser_attitude_transpose);
+    utility.matvecmul(chaser_attitude_transpose, wxr_chaser_b, wxr_chaser_i);
+
+    utility.addition(chaser_vel, wxr_chaser_i, v_camera);
+
+    // Find port velocity in inertial frame
+    utility.cross(target_w, docking_port_location, wxr_target_b);
+    utility.transpose(target_attitude, target_attiutde_transpose);
+    utility.matvecmul(chaser_attitude_transpose, wxr_target_b, wxr_target_i);
+
+    utility.addition(target_vel, wxr_target_i, v_docking_port);
+    
+    // THIS IS NOT WORKING
+    utility.subtract(target_vel, chaser_vel, r_camera_to_dock_rate_i);
 }
 
 /********************************************************************
@@ -193,14 +252,14 @@ void ATTITUDE::chaser_initialize() {
 
     /* sensors */
     sensor.set_horizon_sensor_location(1.0, -3.0, -1.0);
-    sensor.set_horizon_sensor_error(0.0);  // deg
+    sensor.set_horizon_sensor_error(0.01);  // deg
+    sensor.set_camera_error(0.00001);       // rad
+    
+    utility.set_vec(5.0, -1.0, 1.0, camera_location);          // in the chaser body frame
+    utility.set_vec(-2.0, -20.0, 3.0, docking_port_location); // in the Target body frame
 
-    sensor.set_camera_location(5.0, 1.0, 1.0);
-    sensor.set_camera_error(0.0000);       // rad
 
-    utility.set_vec(-2.0, -20, 3, docking_port_location); // in the Target body frame
-
-    dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
+    dcm.calculate_chaser_frame(r_camera_to_dock, velocity, chaser_i);
     quat_util.set_q(chaser_i, 0.01, offset_eul_axis, q_state);
     quat_util.set_q(chaser_i, 0.01, offset_eul_axis, q_est);
 
@@ -237,35 +296,50 @@ void ATTITUDE::estimate_attitude() {
     double y_hat[3], body_chaser_estimate[3][3], body_chaser_estimate_t[3][3], dq_est[4];
 
     sensor.horizon_sensor(body_i, position, y_hat);
-    sensor.camera(pos_rel, body_i, camera_sensor);
+    sensor.camera(r_camera_to_dock, body_i, camera_sensor);
     estimator.TRIAD(camera_sensor, y_hat, body_chaser_estimate_t);
+
     utility.transpose(body_chaser_estimate_t, body_chaser_estimate);
     quat_util.DCM2quat(body_chaser_estimate, dq_est);
     quat_util.calculate_euler_error(dq_est, eul_er_est);
     quat_util.calculate_euler_error_rate(w_body_b, w_ref_b, eul_er_est, eul_er_rate_est);
 }
 
-void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], double target_attitude[3][3]) {
+void ATTITUDE::chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], 
+                                      double target_attitude[3][3], double w_target_b[3]) {
     /*
         This script is to update the dynamics of the chaser
         assuming it is set to reference the defined chaser frame and moves
         relative to the target. 
     */
-    double port_i[3];
-    sensor.set_target_location(target_attitude, docking_port_location, target_pos, port_i);
 
     set_rv(pos, vel);
-    set_pos_vel_rel(target_pos, target_vel);
+    set_target_w_b(w_target_b);
+    calculate_r_camera_to_dock(target_attitude, target_pos, body_i, pos, r_camera_to_dock);
+    calculate_r_camera_to_dock_rate(target_vel, target_attitude, w_target_b, vel, body_i, w_body_b, r_camera_to_dock_rate);
     
-    dcm.calculate_chaser_frame(pos_rel, velocity, chaser_i);
+    dcm.calculate_chaser_frame(r_camera_to_dock, velocity, chaser_i);
     calculate_wdot_body_bwrti();
     quat_util.calculate_qdot(w_body_b, q_state, q_dot);
     quat_util.quat2DCM(q_state, body_i);
-    dcm.calculate_body_chaser(chaser_i, body_i, body_chaser);
+    
+
     controller.set_qdes_target_pointing(chaser_i, q_des);
-    controller.set_wdes_target_pointing(pos_rel, vel_rel, q_state, w_ref_b);
+    controller.set_wdes_target_pointing(r_camera_to_dock, r_camera_to_dock_rate, q_state, w_ref_b);
     
     estimate_attitude();
 
     controller.attitude_control(eul_er_est, eul_er_rate_est, Jmat, torques);
+}
+
+
+void ATTITUDE::top_sol() {
+    /* 
+    Get reference signal
+    Sensors
+    Estimation
+    Controller
+    Actuators
+    Dynamics
+    */
 }

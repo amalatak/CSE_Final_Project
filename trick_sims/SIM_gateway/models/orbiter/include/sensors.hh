@@ -42,7 +42,6 @@ public:
     // Geometry
     void set_horizon_sensor_location(double sensor_x_b, double sensor_y_b, double sensor_z_b);
     void set_camera_location(double camera_x_b, double camera_y_b, double camera_z_b);
-    void set_target_location(double target_attitude[3][3], double target_port[3], double target_cg[3], double port_i[3]);
 
     // Generate noise values
     void generate_noise_vec(double error, double noise_vec[3]);
