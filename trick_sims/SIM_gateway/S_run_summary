@@ -4,7 +4,7 @@ General:
 
 Executable called = /home/amalatak/Documents/Programming/CSE_Final_Project/trick_sims/SIM_gateway/S_main_Linux_5.4_x86_64.exe
 Input file = 
-S_main build time = Mon Oct 21 18:17:36 2019
+S_main build time = Sun Feb  2 22:10:03 2020
 Trick version = 19.1.dev
 
 ===============================================================================
@@ -15,7 +15,7 @@ TRICK_CFLAGS = -Wall -Wmissing-prototypes -Wextra -Wshadow -Imodels
 TRICK_CONVERT_SWIG_FLAGS = 
 TRICK_CPFLAGS = 
 TRICK_CXX = /usr/bin/g++
-TRICK_CXXFLAGS = -Wall -Wextra -Wshadow -Imodels
+TRICK_CXXFLAGS = -Wall -Wextra -Wshadow -std=gnu++11 -Imodels
 TRICK_DEBUG = 0
 TRICK_EDITOR = 
 TRICK_EXEC_LINK_LIBS =  -L/usr/lib -lpython2.7 -lpthread -ldl  -lutil -lm -ludunits2 -lrt -lm -ldl
