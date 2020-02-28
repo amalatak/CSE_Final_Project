@@ -98,12 +98,10 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
         NULL);
 
     ipass = integrate();
-
+    C->time = get_integ_time();
 
     C->target.target_dynamics_update(C->target_pos, C->target_vel);
-    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.target_i, C->target.w_body_b);
-    
-
+    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.q_state, C->target.w_body_b, C->time);
 
     unload_state(
         &C->chaser_pos[0] ,

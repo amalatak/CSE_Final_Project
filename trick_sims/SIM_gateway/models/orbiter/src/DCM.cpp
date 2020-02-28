@@ -9,21 +9,25 @@
 using std::cout;
 using std::endl;
 
+void DCM::set_DCM_from_DCM(double DCM_input[3][3], double DCM_set[3][3]) {
+    /* Set a DCM from another DCM input */
+    DCM_set[0][0] = DCM_input[0][0]; DCM_set[0][1] = DCM_input[0][1]; DCM_set[0][2] = DCM_input[0][2];
+    DCM_set[1][0] = DCM_input[1][0]; DCM_set[1][1] = DCM_input[1][1]; DCM_set[1][2] = DCM_input[1][2];
+    DCM_set[2][0] = DCM_input[2][0]; DCM_set[2][1] = DCM_input[2][1]; DCM_set[2][2] = DCM_input[2][2];
+}
 
-void DCM::calculate_chaser_frame(double pos_rel[3], double velocity[3], double chaser_i[3][3]) {
-    /*
-        This function calculates the "chaser frame" from relative position,
-        chaser position and velocity and has axes aligned such that:
-        x points to the target
-        y completes the right handed system, pointing away from the frame center
-        z is perpendicular to the orbit plane along the LVLH z, perpendicular to
-            the orbit plane
-
-    */
-
-    estimator.TRIAD(pos_rel, velocity, chaser_i);
+void DCM::set_DCM_from_elements(double DCM_0_0, double DCM_0_1, double DCM_0_2, 
+                                double DCM_1_0, double DCM_1_1, double DCM_1_2, 
+                                double DCM_2_0, double DCM_2_1, double DCM_2_2, 
+                                double DCM_set[3][3]) 
+    /* Set a DCM from elements */
+    {
+    DCM_set[0][0] = DCM_0_0; DCM_set[0][1] = DCM_0_1; DCM_set[0][2] = DCM_0_2;
+    DCM_set[1][0] = DCM_1_0; DCM_set[1][1] = DCM_1_1; DCM_set[1][2] = DCM_1_2;
+    DCM_set[2][0] = DCM_2_0; DCM_set[2][1] = DCM_2_1; DCM_set[2][2] = DCM_2_2; 
 
 }
+
 
 void DCM::calculate_body_chaser(double chaser_frame[3][3], double Ti2b[3][3], double body_chaser[3][3]) {
     /*
@@ -34,30 +38,6 @@ void DCM::calculate_body_chaser(double chaser_frame[3][3], double Ti2b[3][3], do
     double Ti2chaser_transpose[3][3];
     utility.transpose(chaser_frame, Ti2chaser_transpose);
     utility.matmul(Ti2b, Ti2chaser_transpose, body_chaser);
-}
-
-void DCM::calculate_LVLH_i(double position[3], double velocity[3], double LVLH_i[3][3]) {
-
-    /* 
-
-    *** VERIFIED AGAINST MATLAB ***
-
-    Algorithm to get LVLH DCM from velocity and position via TRIAD
-    In this case, the LVLH frame has the axes aligned such that
-    x is center pointing
-    y completes the right handed system along the velocity component
-    z is perpendicular to the orbit plane
-
-    */
-
-    double x_dir[3];
-
-    x_dir[0] = -position[0];
-    x_dir[1] = -position[1];
-    x_dir[2] = -position[2];
-    
-    estimator.TRIAD(x_dir, velocity, LVLH_i);
-
 }
 
 void DCM::calculate_body_LVLH(double LVLH_i[3][3], double body_i[3][3], double body_lvlh[3][3]) {

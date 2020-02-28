@@ -29,16 +29,33 @@ int orbit_system_default_data( ORBIT_SYSTEM* C ) {
     C->chaser_pos0[1] =-C->r_mag*sin(C->off_angle) ;
     C->chaser_pos0[2] = 0.0 ;
 
-    C->chaser.set_Jmat(100.0, 0.0, 0.0,
+    C->chaser.estimator.last_measure_time = -1.0;
+
+    C->chaser.physical_properties.set_Jmat(100.0, 0.0, 0.0,
                        0.0, 200.0, 0.0,
                        0.0, 0.0, 100.0);
 
-    C->target.set_Jmat(1000.0, 0.0, 0.0,
+    C->target.physical_properties.set_Jmat(1000.0, 0.0, 0.0,
                        0.0, 2000.0, 0.0,
                        0.0, 0.0, 1000.0);
 
-    C->chaser.set_Jmat_inv();
-    C->target.set_Jmat_inv();
+    C->utility.set_vec(5.0, -1.0, 1.0, C->chaser.physical_properties.camera_location);         // in the chaser body frame
+    C->utility.set_vec(-2.0, -20.0, 3.0, C->chaser.physical_properties.docking_port_location); // in the Target body frame
+
+    C->chaser.sensor.set_horizon_sensor_error(0.01);  // deg
+    C->chaser.sensor.set_camera_error(0.00001);       // rad
+    C->chaser.sensor.set_gyro_errors(0.01, 0.022);    // deg/hr, deg/hr
+    C->chaser.sensor.sensor_rate = 10.0;              // Hz
+    C->chaser.estimator.sensor.sensor_rate = 10.0;              // Hz
+    C->target.sensor.set_star_tracker_error(0.00001);
+
+    C->chaser.physical_properties.set_Jmat_inv();
+    C->target.physical_properties.set_Jmat_inv();
+
+    // Delete this
+    C->chaser.sensor.set_horizon_sensor_error(0.0);  // deg
+    C->chaser.sensor.set_camera_error(0.0000);       // rad
+    C->chaser.sensor.set_gyro_errors(0.0, 0.0);    // deg/hr, deg/hr
 
     return 0 ;
 }
@@ -106,14 +123,17 @@ int orbit_system_init( ORBIT_SYSTEM* C ) {
     C->chaser_acc[2] = -C->mu*C->chaser_pos[2]/sqrt(C->chaser_pos[0]*C->chaser_pos[0] + 
                                                     C->chaser_pos[1]*C->chaser_pos[1] + 
                                                     C->chaser_pos[2]*C->chaser_pos[2]);
+    C->chaser.chaser_initialize(); 
 
+    C->chaser.estimator.set_camera_location(C->chaser.physical_properties.camera_location);
+    C->chaser.estimator.set_docking_port_location(C->chaser.physical_properties.docking_port_location);
     C->chaser.set_rv(C->chaser_pos, C->chaser_vel);
-    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.target_i, C->target.w_body_b);
+    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.q_state, C->target.w_body_b, C->time);
     C->chaser.set_body_i(1.0, 0.0, 0.0,
                          0.0, 1.0, 0.0,
                          0.0, 0.0, 1.0);
     C->chaser.controller.set_gains(0.01, 0.0, 0.1);
-    C->chaser.chaser_initialize(); 
+    
 
     return 0 ; 
 }

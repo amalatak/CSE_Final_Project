@@ -31,6 +31,16 @@ void sensors::set_star_tracker_error(double error_mag) {
     star_tracker_error = M_PI*error_mag/180.0;
 }
 
+void sensors::set_gyro_errors(double bias, double angular_random_walk) {
+    /*
+        Set the gyro bias and angular random walk
+    */
+
+    gyro_bias = bias*(M_PI/180.0)/3600.0;          // rad/s
+    gyro_walk = angular_random_walk*(M_PI/180)/60; // rad/s
+    generate_noise_vec(1.0, gyro_walk_direction);  // --
+}
+
 void sensors::generate_noise_mat(double error, double noise_mat[3][3]) {
     /*  
         This function generates a noise transformation matrix for small signal rotations
@@ -177,5 +187,25 @@ void sensors::star_tracker(double DCM_i[3][3], double DCM_i_meas[3][3]) {
     double noise_mat[3][3];
     generate_noise_mat(star_tracker_error, noise_mat);
     utility.matmul(noise_mat, DCM_i, DCM_i_meas);
+}
+
+
+void sensors::IMU(double time, double w_body[3], double w_meas[3]) {
+    /*
+        Measure angular velocity of a satellite body
+
+        can use the vector [.8147; .9058; .1270] for testing 
+        random walk directions
+    */
+    double vgyro, perturbations[3];
+    vgyro = gyro_walk*gyro_walk;
+    
+    perturbations[0] = gyro_bias + time*vgyro*gyro_walk_direction[0];
+    perturbations[1] = gyro_bias + time*vgyro*gyro_walk_direction[1];
+    perturbations[2] = gyro_bias + time*vgyro*gyro_walk_direction[2];
+    
+    w_meas[0] = w_body[0] + perturbations[0];
+    w_meas[1] = w_body[1] + perturbations[1];
+    w_meas[2] = w_body[2] + perturbations[2];
 }
 

@@ -5,6 +5,7 @@ PURPOSE: (Represent the state and initial conditions of a cannonball)
 #define ORBITER_H
 
 #include "ATTITUDE.hh"
+#include "UTILITIES.hh"
 
 typedef struct {
     double r_mag;
@@ -28,6 +29,8 @@ typedef struct {
 
     double time;        /* s Model time */
     double mu;          /* m3/s2 moon standard gravitational parameter */
+
+    UTILITIES utility;
 
     ATTITUDE chaser;
     ATTITUDE target;

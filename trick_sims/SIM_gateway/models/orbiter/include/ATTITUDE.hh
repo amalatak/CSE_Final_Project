@@ -9,6 +9,7 @@ PURPOSE: ( Orbiter Attitude Model )
 #include "sensors.hh"
 #include "quaternion.hh"
 #include "UTILITIES.hh"
+#include "mass_geometry.hh"
 #include "DCM.hh"
 #include <iostream>
 #include <vector>
@@ -24,13 +25,12 @@ extern "C" {
 
 class ATTITUDE {
 private:
-    // Mass properties
-    double Jmat[3][3];                // -- Inertial tensor of orbiter
-    double Jmat_inv[3][3];            // -- Inverse of the Inertial tensor of orbiter
+    double time;
 
     // Translational Variables
     double position[3];               // m position of spacecraft
     double velocity[3];               // m/s velocity of spacecraft 
+    double w_body_b_est[3];
 
     // DCM
     double body_i[3][3];              // -- body attitude relative to inertial frame
@@ -55,13 +55,20 @@ private:
     double docking_port_location[3];  //
     double r_camera_to_dock[3];       //
     double r_camera_to_dock_rate[3];  //
-    double camera_sensor[3];          //
+    double last_measure_time;
 
-    estimation estimator;
+    // Estimation
+    double dq_est[4];
+    double dq_est_for_interpolation[4];
+    double q_des_for_inertpolation[4];
+    double q_ib[4];
+    double x_hat[3];
+    double y_hat[3];
+
     quaternion quat_util;
     DCM dcm;
-    sensors sensor;
     UTILITIES utility;
+    
 
 public:
     double w_body_b[3];               /* rad/s angular velocity of the body frame in the inertial frame coordinatized in the body frame */
@@ -70,16 +77,16 @@ public:
     double q_dot[4];                  /* -- Quaternion attitude rate of the satellite body with respect to the inertial frame */
     double chaser_i[3][3];            // -- chaser attitude frame relative to inertial frame
     double target_i[3][3];            // -- target attitude frame relative to the inertial frame, used for chaser calculations
+    
+    sensors sensor;
     control controller;
+    mass_geometry physical_properties;
+    estimation estimator;
 
     /* PRINT UTILITY */
     void print_qerr();
 
     /* Set utilities */
-    void set_Jmat(double J_00, double J_01, double J_02, 
-                  double J_10, double J_11, double J_12, 
-                  double J_20, double J_21, double J_22);
-    void set_Jmat_inv();
     void set_body_i(double body_0_0, double body_0_1, double body_0_2, 
                     double body_1_0, double body_1_1, double body_1_2, 
                     double body_2_0, double body_2_1, double body_2_2);
@@ -89,14 +96,6 @@ public:
     void set_target_w_b(double w_target_body_b[3]);
     void calculate_wdot_body_bwrti();
 
-    /* GEOMETRY */
-    void calculate_r_camera_to_dock(double target_attitude[3][3], double target_cg[3], 
-                                    double chaser_attitude[3][3], double chaser_cg[3], 
-                                    double r_camera_2_dock_i[3]);
-    void calculate_r_camera_to_dock_rate(double target_vel[3], double target_attitude[3][3], double target_w_b[3], 
-                                         double chaser_vel[3], double chaser_attitude[3][3], double chaser_w_b[3],
-                                         double r_camera_to_dock_rate_i[3]);
-
     /* TOP LEVEL SCRIPTS */
     void estimate_attitude();
     // void attitude_control();
@@ -104,8 +103,7 @@ public:
     void target_dynamics_update(double pos[], double vel[]);
     void chaser_initialize();
     void chaser_dynamics_update(double pos[], double vel[], double target_pos[], double target_vel[], 
-                                double target_attitude[3][3], double w_target_b[3]);
-    void top_sol();
+                                double target_attitude[4], double w_target_b[3], double time);
 };
 
 #ifdef __cplusplus

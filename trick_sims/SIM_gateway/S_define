@@ -13,6 +13,7 @@ LIBRARY DEPENDENCIES:
       (orbiter/src/quaternion.cpp)
       (orbiter/src/DCM.cpp)
       (orbiter/src/ATTITUDE.cpp)
+      (orbiter/src/mass_geometry.cpp)
     )
 *************************************************************/
 
@@ -32,11 +33,11 @@ class OrbitSystemSimObject : public Trick::SimObject {
             ("integration") trick_ret= orbit_system_integ( & orbit_system);
             ("shutdown") orbit_system_shutdown( &orbit_system ) ;
         }
-} ;
+} ; 
 
 OrbitSystemSimObject dyn ;
 
-IntegLoop dyn_integloop (1) dyn ;
+IntegLoop dyn_integloop (.1) dyn ;
 void create_connections() {
     dyn_integloop.getIntegrator(Runge_Kutta_4, 26);
 }
