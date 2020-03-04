@@ -14,7 +14,12 @@ int orbit_system_shutdown( ORBIT_SYSTEM* C) {
     printf( "t = %g\n", t);
     printf( "pos = [%.9f, %.9f, %.9f]\n", C->target_pos[0], C->target_pos[1], C->target_pos[2]);
     printf( "vel = [%.9f, %.9f, %.9f]\n", C->target_vel[0], C->target_vel[1], C->target_vel[2]);
-    C->target.print_qerr();
+    printf( "qer = [%.9f, %.9f, %.9f]\n", C->target.estimator.euler_error_est[0], 
+                                          C->target.estimator.euler_error_est[1], 
+                                          C->target.estimator.euler_error_est[2]);
+    printf( "dqr = [%.9f, %.9f, %.9f]\n", C->target.estimator.euler_error_est_rate[0], 
+                                          C->target.estimator.euler_error_est_rate[1], 
+                                          C->target.estimator.euler_error_est_rate[2]);
     printf( "========================================\n");
     printf( "        Chaser State at Shutdown        \n");
     printf( "t = %g\n", t);

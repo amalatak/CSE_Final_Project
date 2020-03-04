@@ -100,8 +100,83 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
     ipass = integrate();
     C->time = get_integ_time();
 
-    C->target.target_dynamics_update(C->target_pos, C->target_vel);
-    C->chaser.chaser_dynamics_update(C->chaser_pos, C->chaser_vel, C->target_pos, C->target_vel, C->target.q_state, C->target.w_body_b, C->time);
+    /*
+        Target Loop
+    */
+
+    // Set desired target values as f(r, v)
+    C->target.calculate_LVLH_i(C->target_pos, C->target_vel, C->target.LVLH);
+    C->target.controller.set_qdes_center_pointing(C->target.LVLH, C->target.controller.q_des);
+    C->target.controller.set_wdes_center_pointing(C->target_pos, C->target_vel, C->target.q_state, C->target.controller.w_des);
+
+    // Measure attitude with star trackers
+    C->target.quat_util.quat2DCM(C->target.q_state, C->target.body_i);
+    C->target.sensor.star_tracker(C->target.body_i, C->target.sensor.DCM_measured);
+    C->target.quat_util.DCM2quat(C->target.sensor.DCM_measured, C->target.estimator.q_estimate); // no estimation, q_meas = q_est
+    
+    // Estimate error
+    C->target.quat_util.calculate_quaternion_error(C->target.estimator.q_estimate, C->target.controller.q_des, C->target.estimator.q_error);
+    C->target.quat_util.calculate_euler_error(C->target.estimator.q_error, C->target.estimator.euler_error_est);
+    C->target.quat_util.calculate_euler_error_rate(C->target.w_body_b, 
+                                                   C->target.controller.w_des, 
+                                                   C->target.estimator.euler_error_est, 
+                                                   C->target.estimator.euler_error_est_rate);
+
+    // Controller
+    C->target.controller.attitude_control(C->target.estimator.euler_error_est, 
+                                          C->target.estimator.euler_error_est_rate, 
+                                          C->target.physical_properties.Jmat,
+                                          C->target.controller.torque_out);
+
+    // Actuators go here
+    // Dynamics
+    C->target.calculate_wdot_body_bwrti(C->target.controller.torque_out, 
+                                        C->target.physical_properties.Jmat, 
+                                        C->target.physical_properties.Jmat_inv, 
+                                        C->target.w_body_b, 
+                                        C->target.wdot_b_b);
+    C->target.quat_util.calculate_qdot(C->target.w_body_b, C->target.q_state, C->target.q_dot);
+
+    /* 
+        Chaser Loop
+    */
+
+    /* Desired Values as f(r_t, v_t, q_t, r_c, v_c, q_c) */
+    C->chaser.estimator.calculate_r_camera_to_dock(C->target.q_state, C->target_pos, C->chaser.q_state, C->chaser_pos, C->chaser.r_camera_to_dock);
+    C->chaser.estimator.calculate_r_camera_to_dock_rate(C->target_vel, C->target.q_state, C->target.w_body_b,
+                                                        C->chaser_vel, C->chaser.q_state, C->chaser.w_body_b, 
+                                                        C->chaser.r_camera_to_dock_rate);
+    
+    C->chaser.calculate_chaser_frame(C->chaser.r_camera_to_dock, C->chaser_vel, C->chaser.Chaser_Frame);
+    C->chaser.controller.set_qdes_target_pointing(C->chaser.Chaser_Frame, 
+                                                  C->chaser.controller.q_des);
+    C->chaser.controller.set_wdes_target_pointing(C->chaser.r_camera_to_dock, 
+                                                  C->chaser.r_camera_to_dock_rate, 
+                                                  C->chaser.q_state, 
+                                                  C->chaser.controller.w_des);
+
+    /* Make measurements */
+    C->chaser.estimator.discretized_chaser_estimate(C->time, 
+                                                    C->chaser_pos, 
+                                                    C->chaser.q_state, 
+                                                    C->chaser.controller.q_des, 
+                                                    C->chaser.controller.w_des, 
+                                                    C->chaser.w_body_b, 
+                                                    C->chaser.r_camera_to_dock);
+
+    /* Control System */
+    C->chaser.controller.attitude_control(C->chaser.estimator.euler_error_est, 
+                                          C->chaser.estimator.euler_error_est_rate, 
+                                          C->chaser.physical_properties.Jmat, 
+                                          C->chaser.controller.torque_out);
+
+    /* Dynamics */
+    C->chaser.calculate_wdot_body_bwrti(C->chaser.controller.torque_out, 
+                              C->chaser.physical_properties.Jmat, 
+                              C->chaser.physical_properties.Jmat_inv, 
+                              C->chaser.w_body_b, 
+                              C->chaser.wdot_b_b);
+    C->chaser.quat_util.calculate_qdot(C->chaser.w_body_b, C->chaser.q_state, C->chaser.q_dot);
 
     unload_state(
         &C->chaser_pos[0] ,

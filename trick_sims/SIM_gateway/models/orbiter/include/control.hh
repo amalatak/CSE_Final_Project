@@ -35,6 +35,9 @@ private:
 public:
     double r_camera_to_dock[3];
     double r_camera_to_dock_rate[3];
+    double q_des[4];
+    double w_des[3];
+    double torque_out[3];
 
     /* CONTROLS */
     void set_gains(double K_p, double K_i, double K_d);

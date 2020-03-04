@@ -32,6 +32,7 @@ public:
     void identity(double eye[3][3]);
     void cross(double u[], double v[], double cross_p[]);
     void norm(double vec[3], double vec_norm[3]);
+    void eye(double mat[3][3]);
     void transpose(double mat[3][3], double mat_transpose[3][3]);
     void matmul(double mat1[3][3], double mat2[3][3], double mat1xmat2[3][3]);
     void matvecmul(double mat[3][3], double vec[3], double matxvec[3]);

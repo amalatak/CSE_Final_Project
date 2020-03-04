@@ -53,43 +53,6 @@ void estimation::TRIAD(double vec1[3], double vec2[3], double frame_est[3][3]) {
     frame_est[2][0] = vz[0]; frame_est[2][1] = vz[1]; frame_est[2][2] = vz[2];
 }
 
-void estimation::calculate_chaser_frame(double pos_rel[3], double velocity[3], double chaser_i[3][3]) {
-    /*
-        This function calculates the "chaser frame" from relative position,
-        chaser position and velocity and has axes aligned such that:
-        x points to the target
-        y completes the right handed system, pointing away from the frame center
-        z is perpendicular to the orbit plane along the LVLH z, perpendicular to
-            the orbit plane
-
-    */
-
-    TRIAD(pos_rel, velocity, chaser_i);
-}
-
-
-void estimation::calculate_LVLH_i(double position[3], double velocity[3], double LVLH_i[3][3]) {
-    /* 
-
-    *** VERIFIED AGAINST MATLAB ***
-
-    Algorithm to get LVLH DCM from velocity and position via TRIAD
-    In this case, the LVLH frame has the axes aligned such that
-    x is center pointing
-    y completes the right handed system along the velocity component
-    z is perpendicular to the orbit plane
-
-    */
-
-    double x_dir[3];
-
-    x_dir[0] = -position[0];
-    x_dir[1] = -position[1];
-    x_dir[2] = -position[2];
-    
-    TRIAD(x_dir, velocity, LVLH_i);
-}
-
 void estimation::calculate_r_camera_to_dock(double q_t[4], double target_pos[3], double q_c[4], double chaser_pos[3], double r_camera_2_dock_i[3]) {
     /*
         Given:
@@ -199,33 +162,31 @@ void estimation::discretized_chaser_estimate(double time, double pos[3], double 
         q_i2b = q_bnom2b x q_i2bnom
 
     */
-    double wmag, q_extrapolate[4], q_des_2_i[4], dq[4], delta_q[4];
+    double wmag, q_extrapolate[4], q_des_star[4], delta_q[4];
 
     // Account for sensor discretization
     // If sensor update, read in sensor values
-    if (sensor.sensor_rate*(time - last_measure_time) >= 1.0) {
-        last_measure_time = time; 
+    if (time != last_measure_time) {
+        if (sensor.sensor_rate*(time - last_measure_time) >= 1.0) {
+            last_measure_time = time; 
 
-        estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
-        quat_util.DCM2quat(DCM_body_estimate, dq_est); 
+            estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
+            quat_util.DCM2quat(DCM_body_estimate, dq_est); 
+            
+            quat_util.qmult(dq_est, qdes, q_ib0);      // Check
+        }
+
+        wmag = sqrt(w_body_b_est[0]*w_body_b_est[0] + w_body_b_est[1]*w_body_b_est[1] + w_body_b_est[2]*w_body_b_est[2]);
+        delta_q[0] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[0]/wmag);
+        delta_q[1] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[1]/wmag);
+        delta_q[2] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[2]/wmag);
+        delta_q[3] = cos(wmag*(time - last_measure_time)/2);
         
-        quat_util.qmult(dq_est, qdes, q_ib0);
-        
+        quat_util.qmult(delta_q, q_ib0, q_extrapolate);     // Check
+        quat_util.q_conjugate(qdes, q_des_star);             // Check
+        quat_util.qmult(q_extrapolate, q_des_star, dq_est);  // Check
+
+        quat_util.calculate_euler_error(dq_est, euler_error_est);
+        quat_util.calculate_euler_error_rate(w_body_b_est, wdes, euler_error_est, euler_error_est_rate);
     }
-
-    wmag = sqrt(w_body_b_est[0]*w_body_b_est[0] + w_body_b_est[1]*w_body_b_est[1] + w_body_b_est[2]*w_body_b_est[2]);
-
-    delta_q[0] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[0]/wmag);
-    delta_q[1] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[1]/wmag);
-    delta_q[2] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[2]/wmag);
-    delta_q[3] = cos(wmag*(time - last_measure_time)/2);
-
-    quat_util.qmult(delta_q, q_ib0, q_extrapolate);
-
-    quat_util.q_conjugate(qdes, q_des_2_i);
-    quat_util.qmult(q_extrapolate, q_des_2_i, dq);
-
-    quat_util.calculate_euler_error(dq, euler_error_est);
-    quat_util.calculate_euler_error_rate(w_body_b_est, wdes, euler_error_est, euler_error_est_rate);
-
 }

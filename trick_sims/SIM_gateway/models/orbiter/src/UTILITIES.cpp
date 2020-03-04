@@ -83,6 +83,12 @@ void UTILITIES::set_mat(double mat[3][3], double set_mat[3][3]) {
     set_mat[2][0] = mat[2][0]; set_mat[2][1] = mat[2][1]; set_mat[2][2] = mat[2][2];
 }
 
+void UTILITIES::eye(double mat[3][3]) {
+    mat[0][0] = 1.0; mat[0][1] = 0.0; mat[0][2] = 0.0; 
+    mat[1][0] = 0.0; mat[1][1] = 1.0; mat[1][2] = 0.0; 
+    mat[2][0] = 0.0; mat[2][1] = 0.0; mat[2][2] = 1.0; 
+}
+
 void UTILITIES::transpose(double mat[3][3], double mat_transpose[3][3]) {
     /* 
         Takes transpose of a 3x3 matrix 

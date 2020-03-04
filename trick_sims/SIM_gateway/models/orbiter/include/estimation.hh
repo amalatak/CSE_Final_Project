@@ -35,25 +35,27 @@ private:
 public:
     sensors sensor;
     double last_measure_time;
-    double euler_error_est[3];
-    double euler_error_est_rate[3];
     double r_cam2dock[3];
     double r_cam2dock_rate[3];
 
+    double DCM_estimate[3][3];
+    double q_estimate[4];
+    double q_error[4];
+    
     double w_body_b_est[3];
+    double euler_error_est[3];
+    double euler_error_est_rate[3];
 
     void set_camera_location(double camera_loc[3]);
     void set_docking_port_location(double port_loc[3]);
-
-    /* ESTIMATION */
-    void TRIAD(double vec1[3], double vec2[3], double frame_est[3][3]);
-    void calculate_chaser_frame(double pos_rel[3], double velocity[3], double chaser_i[3][3]);
-    void calculate_LVLH_i(double position[3], double velocity[3], double LVLH_i[3][3]);
 
     void calculate_r_camera_to_dock(double q_t[4], double target_pos[3], double q_c[4], double chaser_pos[3], double r_camera_2_dock_i[3]);
     void calculate_r_camera_to_dock_rate(double target_vel[3], double q_t[4], double w_target_b[3], 
                                          double chaser_vel[3], double q_c[4], double w_chaser_b[3],
                                          double r_camera_to_dock_rate_i[3]);
+
+    /* ESTIMATION */
+    void TRIAD(double vec1[3], double vec2[3], double frame_est[3][3]);
 
     void estimate_chaser_attitude(double time, double pos[3], double q_c[4], double w_body_b[3], double r_camera2dock[3], double DCM_est[3][3]);
     void discretized_chaser_estimate(double time, double pos[3], double q_c[4], double qdes[4], double wdes[3], double w_body_b[3], double r_camera2dock[3]);

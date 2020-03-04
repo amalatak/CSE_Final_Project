@@ -23,12 +23,12 @@ private:
     UTILITIES utility;
 
 public:
-    double Jmat[3][3];         // Inertial matrix
-    double Jmat_inv[3][3];     // Inverse of the inertial matrix
-    double IMU_location[3];
-    double camera_location[3];
-    double star_tracker_location[3];
-    double docking_port_location[3];
+    double Jmat[3][3];                 // kg.m^2 Inertial matrix
+    double Jmat_inv[3][3];             // 1/kg.m^2 Inverse of the inertial matrix
+    double IMU_location[3];            // m
+    double camera_location[3];         // m
+    double star_tracker_location[3];   // m
+    double docking_port_location[3];   // m
     
     void set_Jmat(double J_00, double J_01, double J_02, 
                   double J_10, double J_11, double J_12, 

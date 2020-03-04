@@ -37,6 +37,8 @@ private:
 
 public:
     double sensor_rate;
+    double q_measured[4];
+    double DCM_measured[3][3];
     // Set errors
     void set_horizon_sensor_error(double deg_error);
     void set_camera_error(double error_mag);

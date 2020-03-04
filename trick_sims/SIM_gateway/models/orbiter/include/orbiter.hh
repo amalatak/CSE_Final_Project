@@ -27,6 +27,8 @@ typedef struct {
     double chaser_vel[3] ;     /* m/s xyz-velocity */
     double chaser_pos[3] ;     /* m xyz-position */
 
+    double relative_pos0[3] ;  /* m relative position target relative to chaser */
+
     double time;        /* s Model time */
     double mu;          /* m3/s2 moon standard gravitational parameter */
 
