@@ -163,18 +163,23 @@ void estimation::discretized_chaser_estimate(double time, double pos[3], double 
 
     */
     double wmag, q_extrapolate[4], q_des_star[4], delta_q[4];
+    double test_dq[4];
 
     // Account for sensor discretization
     // If sensor update, read in sensor values
-    if (time != last_measure_time) {
+    if (time != last_time) {
+        last_time = time;
         if (sensor.sensor_rate*(time - last_measure_time) >= 1.0) {
             last_measure_time = time; 
 
             estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
             quat_util.DCM2quat(DCM_body_estimate, dq_est); 
+            quat_util.qmult(dq_est, qdes, q_ib0);
             
-            quat_util.qmult(dq_est, qdes, q_ib0);      // Check
         }
+        /* Test region */
+        estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
+        quat_util.DCM2quat(DCM_body_estimate, test_dq);
 
         wmag = sqrt(w_body_b_est[0]*w_body_b_est[0] + w_body_b_est[1]*w_body_b_est[1] + w_body_b_est[2]*w_body_b_est[2]);
         delta_q[0] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[0]/wmag);
@@ -182,9 +187,9 @@ void estimation::discretized_chaser_estimate(double time, double pos[3], double 
         delta_q[2] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[2]/wmag);
         delta_q[3] = cos(wmag*(time - last_measure_time)/2);
         
-        quat_util.qmult(delta_q, q_ib0, q_extrapolate);     // Check
-        quat_util.q_conjugate(qdes, q_des_star);             // Check
-        quat_util.qmult(q_extrapolate, q_des_star, dq_est);  // Check
+        quat_util.qmult(delta_q, q_ib0, q_extrapolate);   
+        quat_util.q_conjugate(qdes, q_des_star);             
+        quat_util.qmult(q_extrapolate, q_des_star, dq_est);  
 
         quat_util.calculate_euler_error(dq_est, euler_error_est);
         quat_util.calculate_euler_error_rate(w_body_b_est, wdes, euler_error_est, euler_error_est_rate);

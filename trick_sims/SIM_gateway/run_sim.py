@@ -293,9 +293,14 @@ for variable in vector_vars:
     plt.xlabel(time_name)
     plt.ylabel(variable[0])
     plt.title("Simulation Data for {}".format(variable[0]))
+    key = []
+    for i in range(variable[1]):
+        key.append(variable[0].split('.')[-1] + "[{}]".format(i))
+    
     for i in range(variable[1]):
         plt.plot(Data_dict[time_name], Data_dict["{0}[{1}]".format(variable[0], str(i))])
-        plt.savefig(os.path.join(os.getcwd(), DEFAULT_DATA_FOLDER, "plot_data", variable[0].split('.')[-1]))
+    plt.legend(key)
+    plt.savefig(os.path.join(os.getcwd(), DEFAULT_DATA_FOLDER, "plot_data", variable[0].split('.')[-1]))
 
 if args.show_plots:
     plt.show()

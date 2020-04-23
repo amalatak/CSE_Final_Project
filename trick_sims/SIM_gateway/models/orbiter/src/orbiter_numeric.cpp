@@ -149,7 +149,7 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
     
     C->chaser.calculate_chaser_frame(C->chaser.r_camera_to_dock, C->chaser_vel, C->chaser.Chaser_Frame);
     C->chaser.controller.set_qdes_target_pointing(C->chaser.Chaser_Frame, 
-                                                  C->chaser.controller.q_des);
+                                                  C->chaser.controller.q_des);                            
     C->chaser.controller.set_wdes_target_pointing(C->chaser.r_camera_to_dock, 
                                                   C->chaser.r_camera_to_dock_rate, 
                                                   C->chaser.q_state, 
@@ -165,18 +165,19 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
                                                     C->chaser.r_camera_to_dock);
 
     /* Control System */
-    C->chaser.controller.attitude_control(C->chaser.estimator.euler_error_est, 
-                                          C->chaser.estimator.euler_error_est_rate, 
-                                          C->chaser.physical_properties.Jmat, 
-                                          C->chaser.controller.torque_out);
+    C->chaser.controller.phase_plane_control(C->chaser.estimator.euler_error_est, 
+                                             C->chaser.estimator.euler_error_est_rate, 
+                                             C->chaser.controller.torque_out);
 
     /* Dynamics */
     C->chaser.calculate_wdot_body_bwrti(C->chaser.controller.torque_out, 
-                              C->chaser.physical_properties.Jmat, 
-                              C->chaser.physical_properties.Jmat_inv, 
-                              C->chaser.w_body_b, 
-                              C->chaser.wdot_b_b);
+                                        C->chaser.physical_properties.Jmat, 
+                                        C->chaser.physical_properties.Jmat_inv, 
+                                        C->chaser.w_body_b, 
+                                        C->chaser.wdot_b_b);
+
     C->chaser.quat_util.calculate_qdot(C->chaser.w_body_b, C->chaser.q_state, C->chaser.q_dot);
+
 
     unload_state(
         &C->chaser_pos[0] ,

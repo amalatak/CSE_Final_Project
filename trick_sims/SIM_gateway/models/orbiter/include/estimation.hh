@@ -22,6 +22,9 @@ class estimation {
 private:
     UTILITIES utility;
     quaternion quat_util;
+
+    double last_time;
+    
     double docking_port_location[3];
     double camera_location[3];
     double DCM_body_estimate[3][3];

@@ -20,7 +20,7 @@ int orbit_system_default_data( ORBIT_SYSTEM* C ) {
     C->time = 0.0 ;
     C->r_mag = 1900.0e3 ; // system radii
     C->off_angle = .0001;
-    C->chaser.estimator.last_measure_time = -1.0; // for system discretization
+    C->chaser.estimator.last_measure_time = -1.0;    // for system discretization
 
     C->target_pos0[0] = C->r_mag ; 
     C->target_pos0[1] = 0.0 ;
@@ -44,18 +44,16 @@ int orbit_system_default_data( ORBIT_SYSTEM* C ) {
     C->utility.set_vec(5.0, -1.0, 1.0, C->chaser.physical_properties.camera_location);         // in the chaser body frame
     C->utility.set_vec(-2.0, -20.0, 3.0, C->chaser.physical_properties.docking_port_location); // in the Target body frame
 
-    C->chaser.sensor.set_horizon_sensor_error(0.01);  // deg
-    C->chaser.sensor.set_camera_error(0.00001);       // rad
-    C->chaser.sensor.set_gyro_errors(0.01, 0.022);    // deg/hr, deg/hr
+    C->chaser.estimator.sensor.set_horizon_sensor_error(0.01);  // deg
+    C->chaser.estimator.sensor.set_camera_error(0.0001);        // rad
+    C->chaser.estimator.sensor.set_gyro_errors(0.01, 0.022);    // deg/hr, deg/hr
     C->chaser.estimator.sensor.sensor_rate = 10.0;    // Hz
-    C->target.sensor.set_star_tracker_error(0.00001);
+    C->target.estimator.sensor.set_star_tracker_error(0.001);
 
     C->target.controller.set_gains(0.01, 0.0, 0.1);
     C->chaser.controller.set_gains(0.01, 0.0, 0.1);
-
-    C->chaser.sensor.set_horizon_sensor_error(0.0);  // deg
-    C->chaser.sensor.set_camera_error(0.0000);       // rad
-    C->chaser.sensor.set_gyro_errors(0.0, 0.0);      // deg/hr, deg/hr
+    C->chaser.controller.set_phase_plane_bounds(0.001, 0.01);
+    C->chaser.controller.set_jet_thrust(.5);
 
     return 0 ;
 }
@@ -135,8 +133,8 @@ int orbit_system_init( ORBIT_SYSTEM* C ) {
     C->utility.set_vec(0.0, 0.0, 0.0, C->chaser.controller.torque_out);
 
     C->chaser.calculate_chaser_frame(C->relative_pos0, C->chaser_vel, C->chaser.Chaser_Frame);
-    C->chaser.quat_util.set_q_from_DCM(C->chaser.Chaser_Frame, 1.0, 1.0, 1.0, 0.01, C->chaser.q_state);
-    C->chaser.quat_util.set_q_from_DCM(C->chaser.Chaser_Frame, 1.0, 1.0, 1.0, 0.01, C->chaser.estimator.q_estimate);
+    C->chaser.quat_util.set_q_from_DCM(C->chaser.Chaser_Frame, 1.0, 1.0, 1.0, 0.1, C->chaser.q_state);
+    C->chaser.quat_util.set_q_from_DCM(C->chaser.Chaser_Frame, 1.0, 1.0, 1.0, 0.1, C->chaser.estimator.q_estimate);
 
     return 0 ; 
 }

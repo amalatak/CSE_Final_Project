@@ -75,6 +75,56 @@ void control::set_wdes_target_pointing(double pos_rel[3], double vel_rel[3], dou
     
 }
 
+void control::set_phase_plane_bounds(double err_omega, double err_angle) {
+    /* 
+        Set phase plane error boundaries
+    */
+    pp_w_lim = err_omega;
+    pp_angle_lim = err_angle;
+}
+
+void control::set_jet_thrust(double thrust) {
+    /* 
+        Set phase plane error boundaries
+    */
+    jet_thrust = thrust;
+}
+
+void control::Phase_Plane(double eul_err[3], double eul_err_rate[3], double control_output[3]) {
+    /*
+        This function issues TBD for a phase-plane controller 
+    */
+    double PP_error[3];
+
+    PP_error[0] = eul_err[0]/pp_angle_lim + eul_err_rate[0]/pp_w_lim;
+    PP_error[1] = eul_err[1]/pp_angle_lim + eul_err_rate[1]/pp_w_lim;
+    PP_error[2] = eul_err[2]/pp_angle_lim + eul_err_rate[2]/pp_w_lim;
+
+    for (int i = 0; i < 3; i++) {
+        if (PP_error[i] > 1) {
+            control_output[i] = -1.0;
+        }
+        else if (PP_error[i] < -1) {
+            control_output[i] = 1.0;
+        }
+        else {
+            control_output[i] = 0.0;
+        }
+    }
+}
+
+void control::phase_plane_control(double eul_err[3], double eul_err_rate[3], double Tout[3]) {
+    /*
+        This is a top level attitude control script for phase plane control
+    */
+    double uout[3];
+    Phase_Plane(eul_err, eul_err_rate, uout);
+
+    for (int i = 0; i < 3; i++) {
+        Tout[i] = uout[i]*jet_thrust;
+    }
+}
+
 void control::PD(double eul_err[3], double eul_err_rate[3], double desired_out[3]) {
     /*
         This function issues a desired control output for a PD controller
