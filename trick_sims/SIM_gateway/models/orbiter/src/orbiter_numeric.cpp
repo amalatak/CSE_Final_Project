@@ -156,18 +156,31 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
                                                   C->chaser.controller.w_des);
 
     /* Make measurements */
-    C->chaser.estimator.discretized_chaser_estimate(C->time, 
-                                                    C->chaser_pos, 
-                                                    C->chaser.q_state, 
-                                                    C->chaser.controller.q_des, 
-                                                    C->chaser.controller.w_des, 
-                                                    C->chaser.w_body_b, 
-                                                    C->chaser.r_camera_to_dock);
+    //C->chaser.estimator.discretized_chaser_estimate(C->time, 
+    //                                                C->chaser_pos, 
+    //                                                C->chaser.q_state, 
+    //                                                C->chaser.controller.q_des, 
+    //                                                C->chaser.controller.w_des, 
+    //                                                C->chaser.w_body_b, 
+    //                                                C->chaser.r_camera_to_dock);
+
+    C->chaser.quat_util.calculate_quaternion_error(C->chaser.q_state, C->chaser.controller.q_des, C->chaser.estimator.q_error);
+    C->chaser.quat_util.calculate_euler_error(C->chaser.estimator.q_error, C->chaser.estimator.euler_error_est);
+    C->chaser.quat_util.calculate_euler_error_rate(C->chaser.w_body_b, 
+                                                   C->chaser.controller.w_des, 
+                                                   C->chaser.estimator.euler_error_est, 
+                                                   C->chaser.estimator.euler_error_est_rate);
+
 
     /* Control System */
-    C->chaser.controller.phase_plane_control(C->chaser.estimator.euler_error_est, 
-                                             C->chaser.estimator.euler_error_est_rate, 
-                                             C->chaser.controller.torque_out);
+    //C->chaser.controller.phase_plane_control(C->chaser.estimator.euler_error_est, 
+    //                                         C->chaser.estimator.euler_error_est_rate, 
+    //                                         C->chaser.controller.torque_out);
+
+    C->chaser.controller.attitude_control(C->chaser.estimator.euler_error_est, 
+                                          C->chaser.estimator.euler_error_est_rate, 
+                                          C->chaser.physical_properties.Jmat,
+                                          C->chaser.controller.torque_out);
 
     /* Dynamics */
     C->chaser.calculate_wdot_body_bwrti(C->chaser.controller.torque_out, 
@@ -177,7 +190,6 @@ int orbit_system_integ(ORBIT_SYSTEM* C) {
                                         C->chaser.wdot_b_b);
 
     C->chaser.quat_util.calculate_qdot(C->chaser.w_body_b, C->chaser.q_state, C->chaser.q_dot);
-
 
     unload_state(
         &C->chaser_pos[0] ,

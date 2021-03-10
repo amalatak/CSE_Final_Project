@@ -35,6 +35,8 @@ private:
     double y_hat[3];
     double z_hat[3];
 
+    double discretization_enable;
+
 public:
     sensors sensor;
     double last_measure_time;
@@ -49,6 +51,10 @@ public:
     double euler_error_est[3];
     double euler_error_est_rate[3];
 
+    estimation();
+    void enable_discretization();
+    void disable_discretization();
+
     void set_camera_location(double camera_loc[3]);
     void set_docking_port_location(double port_loc[3]);
 
@@ -59,7 +65,6 @@ public:
 
     /* ESTIMATION */
     void TRIAD(double vec1[3], double vec2[3], double frame_est[3][3]);
-
     void estimate_chaser_attitude(double time, double pos[3], double q_c[4], double w_body_b[3], double r_camera2dock[3], double DCM_est[3][3]);
     void discretized_chaser_estimate(double time, double pos[3], double q_c[4], double qdes[4], double wdes[3], double w_body_b[3], double r_camera2dock[3]);
 };

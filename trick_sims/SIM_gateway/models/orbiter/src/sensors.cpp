@@ -11,6 +11,29 @@ using std::endl;
 
 /* *** HOW SHOULD I GENERATE NOISE *** */
 
+sensors::sensors() {
+    /*
+        Initialize sensors class
+    */
+    sensor_enable_state = 0;
+    std_1[0]  = 1.0; std_1[1]  = 1.0; std_1[2]  = 1.0;
+    mean_0[0] = 0.0; mean_0[1] = 0.0; mean_0[2] = 0.0;
+}
+
+void sensors::enable_sensor_noise() {
+    /*
+        enable noise in sensors
+    */
+    sensor_enable_state = 1;
+}
+
+void sensors::disable_sensor_noise() {
+    /*
+        disable noise in sensors
+    */
+   sensor_enable_state = 0;
+}
+
 void sensors::set_horizon_sensor_error(double deg_error) {
     /*  
         Set the horizon sensor error
@@ -38,10 +61,11 @@ void sensors::set_gyro_errors(double bias, double angular_random_walk) {
 
     gyro_bias = bias*(M_PI/180.0)/3600.0;          // rad/s
     gyro_walk = angular_random_walk*(M_PI/180)/60; // rad/s
-    generate_noise_vec(1.0, gyro_walk_direction);  // --
+    generate_noise_vec(mean_0, std_1, gyro_walk_direction, 1.0);  // --
+    generate_noise_vec(mean_0, std_1, gyro_bias_direction, 1.0);  // --
 }
 
-void sensors::generate_noise_mat(double error, double noise_mat[3][3]) {
+void sensors::generate_noise_mat(double error, double noise_mat[3][3], double enable) {
     /*  
         This function generates a noise transformation matrix for small signal rotations
         The generated error is a normal random error so error is gaussian.
@@ -59,32 +83,43 @@ void sensors::generate_noise_mat(double error, double noise_mat[3][3]) {
     double T3_error_1[3][3], T1_error_2[3][3], T3_error_3[3][3];
     double error_3_1[3][3];
 
-    dcm.T3(error*distribution(generator), T3_error_1);
-    dcm.T1(error*distribution(generator), T1_error_2);
-    dcm.T3(error*distribution(generator), T3_error_3);
+    dcm.T3(error*distribution(generator)*enable, T3_error_1);
+    dcm.T1(error*distribution(generator)*enable, T1_error_2);
+    dcm.T3(error*distribution(generator)*enable, T3_error_3);
 
     utility.matmul(T3_error_1, T1_error_2, error_3_1);
     utility.matmul(error_3_1, T3_error_3, noise_mat);
 
 }
-void sensors::generate_noise_vec(double error, double noise_vec[3]) {
+void sensors::generate_noise_vec(double mean[3], double std_dev[3], double noise_vec[3], double enable) {
     /*  
         Generate a noise vector
     */
 
-    std::normal_distribution<double> distribution(0.0, 1.0);   // Distribution w/ mean 0 and std 1
+    std::normal_distribution<double> distributionX(mean[0], std_dev[0]);   // Distribution w/ mean and std
+    std::normal_distribution<double> distributionY(mean[1], std_dev[1]);   // Distribution w/ mean and std
+    std::normal_distribution<double> distributionZ(mean[2], std_dev[2]);   // Distribution w/ mean and std
 
-    noise_vec[0] = error*distribution(generator);
-    noise_vec[1] = error*distribution(generator);
-    noise_vec[2] = error*distribution(generator);
+    noise_vec[0] = distributionX(generator)*enable;
+    noise_vec[1] = distributionY(generator)*enable;
+    noise_vec[2] = distributionZ(generator)*enable;
 }
 
-double sensors::generate_noise_scalar(double error) {
+double sensors::generate_noise_scalar(double error, double enable) {
     /*  
         Generate a noise scalar
     */
     std::normal_distribution<double> distribution(0.0, 1.0);   // Distribution w/ mean 0 and std 1
-    return error*distribution(generator);
+    return error*distribution(generator)*enable;
+}
+
+void sensors::generate_bias_vec(double bias_in[3], double bias_out[3], double enable) {
+    /*
+        Generate bias
+    */
+   bias_out[0] = bias_in[0]*enable;
+   bias_out[1] = bias_in[1]*enable;
+   bias_out[2] = bias_in[2]*enable;
 }
 
 /* GEOMETRY */
@@ -132,7 +167,7 @@ void sensors::horizon_sensor(double Ti2b[3][3], double position[3], double meas_
                 the center of the Earth)
     */
     double noise_mat[3][3], noisy_Ti2b[3][3], pos_dir[3];  
-    generate_noise_mat(horizon_sensor_error, noise_mat);
+    generate_noise_mat(horizon_sensor_error, noise_mat, sensor_enable_state);
     utility.norm(position, pos_dir);
 
     utility.matmul(noise_mat, Ti2b, noisy_Ti2b);
@@ -156,8 +191,8 @@ void sensors::camera(double rel_pos[3], double Ti2b[3][3], double target_dir_mea
         r_cam2target = Ti2b
     */
     
-    double noise_y = generate_noise_scalar(camera_error);
-    double noise_z = generate_noise_scalar(camera_error);
+    double noise_y = generate_noise_scalar(camera_error, sensor_enable_state);
+    double noise_z = generate_noise_scalar(camera_error, sensor_enable_state);
 
     double rel_pos_b[3], u_c2t_b[3], zb[3], yb[3];
     double zmeas, ymeas, meas_vec[3];
@@ -185,7 +220,7 @@ void sensors::star_tracker(double DCM_i[3][3], double DCM_i_meas[3][3]) {
         to model star trackers
     */
     double noise_mat[3][3];
-    generate_noise_mat(star_tracker_error, noise_mat);
+    generate_noise_mat(star_tracker_error, noise_mat, sensor_enable_state);
     utility.matmul(noise_mat, DCM_i, DCM_i_meas);
 }
 
@@ -197,12 +232,24 @@ void sensors::IMU(double time, double w_body[3], double w_meas[3]) {
         can use the vector [.8147; .9058; .1270] for testing 
         random walk directions
     */
-    double vgyro, perturbations[3];
+    double vgyro, sensor_bias[3], sensor_walk[3], gyro_walk_mean[3], gyro_bias_mean[3], perturbations[3];
     vgyro = gyro_walk*gyro_walk;
     
-    perturbations[0] = gyro_bias + time*vgyro*gyro_walk_direction[0];
-    perturbations[1] = gyro_bias + time*vgyro*gyro_walk_direction[1];
-    perturbations[2] = gyro_bias + time*vgyro*gyro_walk_direction[2];
+    gyro_walk_mean[0] = time*vgyro*gyro_walk_direction[0]; 
+    gyro_walk_mean[1] = time*vgyro*gyro_walk_direction[1]; 
+    gyro_walk_mean[2] = time*vgyro*gyro_walk_direction[2]; 
+
+    gyro_bias_mean[0] = gyro_bias*gyro_bias_direction[0];
+    gyro_bias_mean[1] = gyro_bias*gyro_bias_direction[1];
+    gyro_bias_mean[2] = gyro_bias*gyro_bias_direction[2];
+
+    generate_bias_vec(gyro_bias_mean, sensor_bias, sensor_enable_state);
+    generate_noise_vec(gyro_walk_mean, mean_0, sensor_walk, sensor_enable_state);
+    
+    
+    perturbations[0] = sensor_bias[0] + sensor_walk[0];
+    perturbations[1] = sensor_bias[1] + sensor_walk[1];
+    perturbations[2] = sensor_bias[2] + sensor_walk[2];
     
     w_meas[0] = w_body[0] + perturbations[0];
     w_meas[1] = w_body[1] + perturbations[1];
