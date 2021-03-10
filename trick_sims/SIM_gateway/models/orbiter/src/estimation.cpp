@@ -8,6 +8,18 @@
 using std::cout;
 using std::endl;
 
+estimation::estimation() {
+    discretization_enable = 0.0;
+}
+
+void estimation::enable_discretization() {
+    discretization_enable = 1.0;
+}
+
+void estimation::disable_discretization() {
+    discretization_enable = 0.0;
+}
+
 
 void estimation::set_camera_location(double camera_loc[3]) {
     camera_location[0] = camera_loc[0];
@@ -163,13 +175,13 @@ void estimation::discretized_chaser_estimate(double time, double pos[3], double 
 
     */
     double wmag, q_extrapolate[4], q_des_star[4], delta_q[4];
-    double test_dq[4];
 
     // Account for sensor discretization
     // If sensor update, read in sensor values
     if (time != last_time) {
         last_time = time;
-        if (sensor.sensor_rate*(time - last_measure_time) >= 1.0) {
+        // Check if enough time has passed or if discretization is enabled
+        if ((sensor.sensor_rate*(time - last_measure_time) >= 1.0) || !discretization_enable) {
             last_measure_time = time; 
 
             estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
@@ -177,9 +189,6 @@ void estimation::discretized_chaser_estimate(double time, double pos[3], double 
             quat_util.qmult(dq_est, qdes, q_ib0);
             
         }
-        /* Test region */
-        estimate_chaser_attitude(time, pos, q_c, w_body_b, r_camera2dock, DCM_body_estimate);
-        quat_util.DCM2quat(DCM_body_estimate, test_dq);
 
         wmag = sqrt(w_body_b_est[0]*w_body_b_est[0] + w_body_b_est[1]*w_body_b_est[1] + w_body_b_est[2]*w_body_b_est[2]);
         delta_q[0] = sin(wmag*(time - last_measure_time)/2)*(w_body_b_est[0]/wmag);

@@ -47,8 +47,10 @@ int orbit_system_default_data( ORBIT_SYSTEM* C ) {
     C->chaser.estimator.sensor.set_horizon_sensor_error(0.01);  // deg
     C->chaser.estimator.sensor.set_camera_error(0.0001);        // rad
     C->chaser.estimator.sensor.set_gyro_errors(0.01, 0.022);    // deg/hr, deg/hr
-    C->chaser.estimator.sensor.sensor_rate = 10.0;    // Hz
+    C->chaser.estimator.sensor.sensor_rate = 10.0;              // Hz
     C->target.estimator.sensor.set_star_tracker_error(0.001);
+    C->chaser.estimator.sensor.disable_sensor_noise();
+    C->target.estimator.sensor.disable_sensor_noise();
 
     C->target.controller.set_gains(0.01, 0.0, 0.1);
     C->chaser.controller.set_gains(0.01, 0.0, 0.1);
